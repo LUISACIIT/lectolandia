@@ -1,751 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Lectolandia</title>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta http-equiv="Permissions-Policy" content="microphone=(self)">
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Andika:wght@400;700&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Baloo+2:wght@600;800&display=swap" rel="stylesheet">
 <style>
-/* Layout: dos mundos grandes tipo bloque 3D; cada uno abre su pantalla de lectura centrada */
 :root{
-  color-scheme: light;
-  --cielo:#dff3ff; --cielo2:#fff6dc;
-  --tinta:#23304a; --tinta-suave:#5a6886;
-  --papel:#ffffff;
-  --rojo:#ff5d5d; --naranja:#ff9f1c; --amarillo:#ffd23f; --verde:#2ec27e; --azul:#3a86ff; --morado:#8b5cf6; --rosa:#ff6fb5;
-  --sombra:rgba(35,48,74,.18);
-  --f-titulo:"Baloo 2", "Comic Sans MS", system-ui, sans-serif;
-  --f-lectura:"Andika", "Trebuchet MS", system-ui, sans-serif;
+  --ink:#2b2d42; --muted:#6b6f85; --pri:#ff7a59; --pri2:#e8613f; --sec:#3fa7d6; --sec2:#2b88b5;
+  --ok:#2bb673; --ok2:#1f9459; --bad:#ef476f; --yel:#ffd166; --card:#ffffff; --pur:#8e6cf0; --pur2:#7151d6;
 }
-*{box-sizing:border-box}
-html,body{min-height:100%}
-body{margin:0;font-family:var(--f-lectura);color:var(--tinta);
-  background:linear-gradient(180deg,var(--cielo) 0%,var(--cielo2) 100%) fixed;background-color:var(--cielo);
-  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:0 32px;
-  -webkit-tap-highlight-color:transparent}
-button{font-family:inherit;color:inherit;cursor:pointer;border:0;background:none}
-button:focus-visible{outline:4px solid var(--azul);outline-offset:3px}
-.wrap{max-width:980px;margin:0 auto}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:'Andika',system-ui,sans-serif;color:var(--ink);min-height:100vh;
+  background:radial-gradient(circle at 10% 10%,#fff1c9 0,transparent 40%),radial-gradient(circle at 90% 20%,#d9f2ff 0,transparent 45%),linear-gradient(#fff8ec,#eaf7ff);background-attachment:fixed}
+h1,h2,h3,.btn,.tab,.badge{font-family:'Baloo 2',sans-serif}
+.screen{display:none;max-width:920px;margin:0 auto;padding:16px 16px 40px}
+.screen.active{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 8px;flex-wrap:wrap}
-.logo{display:flex;align-items:center;gap:10px;font-family:var(--f-titulo);font-weight:800;font-size:clamp(1.6rem,5vw,2.3rem);line-height:1}
-.logo .libro{width:52px;height:52px;border-radius:16px;background:var(--naranja);display:grid;place-items:center;font-size:1.8rem;box-shadow:0 5px 0 #d97f00}
-.logo span b{color:var(--azul)} .logo span i{font-style:normal;color:var(--rosa)}
-.chips{display:flex;gap:8px;align-items:center}
-.chip{display:flex;align-items:center;gap:6px;background:var(--papel);border-radius:999px;padding:8px 14px;font-family:var(--f-titulo);font-weight:700;font-size:1.15rem;box-shadow:0 4px 0 var(--sombra)}
-.chip.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--sombra)}
+/* botones */
+.btn{border:none;border-radius:18px;padding:13px 22px;font-size:1.15rem;font-weight:800;cursor:pointer;color:#fff;
+  background:var(--pri);box-shadow:0 5px 0 var(--pri2);transition:transform .08s,box-shadow .08s;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--pri2)}
+.btn.blue{background:var(--sec);box-shadow:0 5px 0 var(--sec2)} .btn.blue:active{box-shadow:0 1px 0 var(--sec2)}
+.btn.green{background:var(--ok);box-shadow:0 5px 0 var(--ok2)} .btn.green:active{box-shadow:0 1px 0 var(--ok2)}
+.btn.purple{background:var(--pur);box-shadow:0 5px 0 var(--pur2)} .btn.purple:active{box-shadow:0 1px 0 var(--pur2)}
+.btn.ghost{background:#fff;color:var(--ink);box-shadow:0 4px 0 #d9dbe6}
+.btn.small{padding:8px 14px;font-size:1rem;border-radius:14px}
+.btn:disabled{opacity:.45;pointer-events:none}
 
-.saludo{font-family:var(--f-titulo);font-size:clamp(1.3rem,4vw,1.8rem);margin:10px 0 4px;text-wrap:balance}
-.sub{color:var(--tinta-suave);margin:0 0 18px;font-size:1.05rem}
-.mundos{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px}
-.mundo{position:relative;text-align:left;border-radius:28px;padding:22px;color:#fff;min-height:230px;display:flex;flex-direction:column;justify-content:space-between;
-  background:var(--c);box-shadow:0 9px 0 var(--c2),0 16px 26px var(--sombra);transition:transform .15s}
-.mundo:hover{transform:translateY(-4px) rotate(-1deg)}
-.mundo:active{transform:translateY(7px);box-shadow:0 2px 0 var(--c2)}
-.mundo .em{font-size:3.8rem;line-height:1;filter:drop-shadow(0 4px 0 rgba(0,0,0,.15))}
-.mundo h3{font-family:var(--f-titulo);font-size:2rem;margin:8px 0 0;line-height:1.05}
-.mundo p{margin:4px 0 0;font-size:1.05rem;opacity:.95}
-.edad{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.28);border-radius:999px;padding:3px 12px;font-weight:700;font-size:.9rem}
-.progreso{margin-top:12px;height:12px;border-radius:9px;background:rgba(255,255,255,.3);overflow:hidden}
-.progreso i{display:block;height:100%;background:#fff;border-radius:9px}
-.cifra{font-weight:700;font-size:.95rem;margin-top:6px}
+/* bienvenida */
+.welcome{text-align:center;padding-top:18px}
+.logo{font-size:4.2rem;line-height:1;animation:bounce 2.2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.welcome h1{font-size:clamp(2.4rem,9vw,3.6rem);margin:6px 0 0;color:var(--pri);text-shadow:3px 3px 0 #ffe1b0}
+.welcome p.sub{font-size:1.2rem;color:var(--muted);margin:4px 0 22px}
+.panel{background:var(--card);border-radius:26px;padding:22px;box-shadow:0 10px 30px rgba(43,45,66,.08);max-width:520px;margin:0 auto}
+.panel label{display:block;font-weight:700;font-size:1.15rem;margin-bottom:8px}
+.panel input{width:100%;font-family:'Andika';font-size:1.4rem;padding:12px 16px;border-radius:16px;border:3px solid #ffe1b0;outline:none;text-align:center}
+.panel input:focus{border-color:var(--pri)}
+.opt{font-size:.95rem;color:var(--muted);margin-top:6px}
+.micstate{margin:18px 0 6px;font-size:1.05rem;padding:10px;border-radius:14px;background:#f3f4f8}
+.micstate.ok{background:#dff7ea;color:#137a46}
+.micstate.bad{background:#ffe3e9;color:#b3123c}
+.welcome .actions{display:flex;flex-direction:column;gap:14px;margin-top:16px}
 
-.pantalla[hidden]{display:none!important}
-.barra{display:flex;align-items:center;gap:12px;margin:8px 0 16px;flex-wrap:wrap}
-.volver{background:var(--papel);border-radius:16px;padding:10px 16px;font-family:var(--f-titulo);font-weight:700;font-size:1.1rem;box-shadow:0 4px 0 var(--sombra)}
-.volver:active{transform:translateY(3px);box-shadow:0 1px 0 var(--sombra)}
-.barra h2{font-family:var(--f-titulo);margin:0;font-size:clamp(1.4rem,4.5vw,2rem);flex:1;min-width:0}
-.panel{background:var(--papel);border-radius:28px;padding:clamp(16px,3vw,28px);box-shadow:0 10px 0 rgba(35,48,74,.08),0 16px 30px var(--sombra)}
-.ayuda{color:var(--tinta-suave);margin:0 0 14px;font-size:1.05rem}
-.filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.filtro{padding:8px 16px;border-radius:14px;font-family:var(--f-titulo);font-weight:700;font-size:1.05rem;background:var(--cielo);box-shadow:0 4px 0 var(--sombra)}
-.filtro[aria-pressed="true"]{background:var(--acento);color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+/* barra superior */
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.topbar h2{flex:1;margin:0;font-size:clamp(1.3rem,5vw,1.8rem);text-align:center}
+.badge{background:#fff;border-radius:999px;padding:6px 14px;font-weight:800;box-shadow:0 3px 0 #e6e7ef;white-space:nowrap}
 
-/* Menú de oraciones */
-.niveles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
-.nivel{text-align:left;border-radius:22px;padding:16px;color:#fff;background:var(--c);box-shadow:0 7px 0 var(--c2)}
-.nivel:active{transform:translateY(5px);box-shadow:0 2px 0 var(--c2)}
-.nivel b{display:block;font-family:var(--f-titulo);font-size:1.5rem;line-height:1.1}
-.nivel span{font-size:.98rem;opacity:.95}
-.subt{font-family:var(--f-titulo);font-size:1.3rem;margin:0 0 10px}
-.numeros{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:8px}
-.num{aspect-ratio:1;max-width:100%;border-radius:12px;font-weight:700;font-size:1.05rem;background:var(--cielo);box-shadow:0 3px 0 var(--sombra);font-variant-numeric:tabular-nums}
-.num.leida{background:var(--verde);color:#fff;box-shadow:0 3px 0 #1e9160}
-.num:active{transform:translateY(2px)}
+/* menú */
+.hello{font-size:clamp(1.6rem,6vw,2.2rem);text-align:center;margin:6px 0 4px;font-family:'Baloo 2';font-weight:800}
+.hello span{color:var(--pri)}
+.menu-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin-top:18px}
+.mcard{border:none;border-radius:28px;padding:26px 18px;color:#fff;cursor:pointer;text-align:center;font-family:'Baloo 2';transition:transform .15s}
+.mcard:active{transform:scale(.97)}
+.mcard .ico{font-size:3.6rem}
+.mcard .tt{font-size:2rem;font-weight:800;line-height:1.1}
+.mcard .ds{font-size:1.1rem;opacity:.95;font-weight:600}
+.mcard.o{background:linear-gradient(135deg,#ff9a76,#ff6b6b);box-shadow:0 8px 0 #d84f4f}
+.mcard.c{background:linear-gradient(135deg,#6dc8f3,#8e6cf0);box-shadow:0 8px 0 #6a4fcf}
+.bar{height:14px;background:rgba(255,255,255,.35);border-radius:99px;margin:12px auto 4px;max-width:220px;overflow:hidden}
+.bar i{display:block;height:100%;background:#fff;border-radius:99px}
+.menu-foot{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:26px}
 
-/* Juego */
-.juego{text-align:center}
-.contador{display:flex;justify-content:center;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-.contador i{width:16px;height:16px;border-radius:50%;background:#e3e8f2}
-.contador i.ok{background:var(--verde)} .contador i.mal{background:var(--naranja)} .contador i.ya{outline:3px solid var(--azul)}
-.etiqueta{display:inline-block;background:var(--cielo2);border-radius:999px;padding:4px 12px;font-weight:700;font-size:.95rem;color:var(--tinta-suave);margin-bottom:6px}
-.oracion{font-size:clamp(1.6rem,5.5vw,2.4rem);font-weight:700;line-height:1.5;margin:6px 0 16px;text-wrap:balance}
-.oracion button,.texto button{font:inherit;padding:0 .08em;border-radius:8px}
-.oracion button:hover,.texto button:hover{background:var(--amarillo)}
-.repetir{display:inline-flex;align-items:center;gap:8px;background:var(--azul);color:#fff;border-radius:14px;padding:10px 16px;font-family:var(--f-titulo);font-weight:700;font-size:1.05rem;box-shadow:0 4px 0 #2563c9;margin:0 0 18px}
-.repetir:active{transform:translateY(3px);box-shadow:0 1px 0 #2563c9}
-.opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;max-width:640px;margin:0 auto}
-.op{padding:18px 8px;border-radius:22px;background:var(--cielo);font-size:clamp(2.3rem,8vw,3.2rem);letter-spacing:.06em;box-shadow:0 6px 0 var(--sombra);transition:transform .1s}
-.op:active{transform:translateY(4px)}
-.op.bien{background:var(--verde);box-shadow:0 6px 0 #1e9160}
-.op.error{background:#ffe1d1;animation:temblor .35s}
-@keyframes temblor{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+/* pestañas niveles */
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px}
+.tab{flex:0 0 auto;border:none;border-radius:16px;padding:10px 16px;font-size:1.05rem;font-weight:800;background:#fff;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 #e1e3ec}
+.tab.active{background:var(--pri);color:#fff;box-shadow:0 3px 0 var(--pri2)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:10px}
+.item{border:none;background:#fff;border-radius:18px;padding:12px 4px 8px;cursor:pointer;box-shadow:0 4px 0 #e1e3ec;font-family:'Baloo 2';transition:transform .1s}
+.item:active{transform:scale(.95)}
+.item .n{font-size:1.6rem;font-weight:800;color:var(--sec2)}
+.item .st{font-size:.85rem;letter-spacing:-1px;min-height:1.1em}
+.item.done{background:#eafbf1}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.scard{border:none;background:#fff;border-radius:22px;padding:14px 10px;cursor:pointer;box-shadow:0 5px 0 #e1e3ec;text-align:center;transition:transform .1s}
+.scard:active{transform:scale(.96)}
+.scard .e{font-size:2.6rem}
+.scard .num{font-family:'Baloo 2';color:var(--muted);font-size:.9rem}
+.scard .t{font-family:'Baloo 2';font-weight:800;font-size:1.1rem;line-height:1.15;min-height:2.3em}
+.scard.done{background:#eafbf1}
 
-/* Cuentos */
-.cuentos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
-.portada{text-align:left;border-radius:22px;padding:16px;background:var(--c);color:#fff;box-shadow:0 7px 0 var(--c2);display:flex;flex-direction:column;gap:6px;min-height:170px}
-.portada:active{transform:translateY(5px);box-shadow:0 2px 0 var(--c2)}
-.portada .n{font-weight:700;font-size:.9rem;opacity:.9;font-variant-numeric:tabular-nums}
-.portada .em{font-size:2.6rem;line-height:1.1}
-.portada h4{font-family:var(--f-titulo);font-size:1.3rem;margin:0;line-height:1.1;text-wrap:balance}
-.portada small{font-weight:700;opacity:.92}
-.portada .hecho{margin-top:auto;font-weight:700}
-.lector-top{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
-.lector-top .titulo{font-family:var(--f-titulo);font-size:clamp(1.4rem,4.5vw,2rem);margin:0;flex:1;min-width:0}
-.mini{background:var(--cielo);border-radius:14px;padding:8px 14px;font-family:var(--f-titulo);font-weight:700;font-size:1.05rem;box-shadow:0 4px 0 var(--sombra)}
-.mini.prim{background:var(--rosa);color:#fff;box-shadow:0 4px 0 #d94b92}
-.mini:active{transform:translateY(3px)}
-.ilustra{font-size:clamp(3.5rem,12vw,5rem);text-align:center;margin:0 0 8px}
-.texto{font-size:var(--tam,1.5rem);line-height:1.75;max-width:62ch;margin:0 auto}
-.texto .frase{border-radius:10px;transition:background .2s}
-.texto .frase.leyendo{background:#fff1a8;box-shadow:0 0 0 4px #fff1a8}
-.preguntas{max-width:62ch;margin:26px auto 0;display:grid;gap:18px}
-.preg{background:var(--cielo2);border-radius:20px;padding:16px}
-.preg p{font-weight:700;font-size:1.25rem;margin:0 0 10px;cursor:pointer}
-.preg .ops{display:flex;flex-wrap:wrap;gap:10px}
-.preg .ops button{background:var(--papel);padding:10px 16px;border-radius:14px;font-size:1.1rem;box-shadow:0 4px 0 var(--sombra);text-align:left}
-.preg .ops button.bien{background:var(--verde);color:#fff}
-.preg .ops button.error{background:#ffe1d1;animation:temblor .35s}
-.pie-cuento{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;max-width:62ch;margin:22px auto 0}
-
-.fin{text-align:center;padding:20px 0}
-.fin .trofeo{font-size:5rem}
-.fin h3{font-family:var(--f-titulo);font-size:2rem;margin:6px 0}
-.grande-btn{background:var(--verde);color:#fff;font-family:var(--f-titulo);font-weight:800;font-size:1.25rem;padding:12px 24px;border-radius:18px;box-shadow:0 6px 0 #1e9160;margin:8px 4px 0}
-.grande-btn.alt{background:var(--azul);box-shadow:0 6px 0 #2563c9}
-.grande-btn:active{transform:translateY(4px)}
-
-.confeti{position:fixed;top:-20px;width:12px;height:16px;border-radius:3px;pointer-events:none;z-index:50;animation:cae 1.6s ease-in forwards}
-@keyframes cae{to{transform:translateY(105vh) rotate(720deg);opacity:.7}}
-.globo{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%) scale(.4);font-family:var(--f-titulo);font-weight:800;font-size:clamp(2rem,8vw,3.4rem);color:var(--verde);pointer-events:none;z-index:60;animation:pop .9s ease-out forwards;text-shadow:0 4px 0 #fff}
-@keyframes pop{30%{transform:translate(-50%,-50%) scale(1.1)}70%{opacity:1}100%{transform:translate(-50%,-70%) scale(1);opacity:0}}
-/* Nombre */
-.bienvenida{max-width:520px;margin:30px auto 0;text-align:center}
-.bienvenida .em{font-size:4.5rem;line-height:1}
-.bienvenida h1{font-family:var(--f-titulo);font-size:clamp(1.7rem,6vw,2.4rem);margin:8px 0 4px}
-.bienvenida input{width:100%;font:700 1.6rem var(--f-lectura);text-align:center;padding:14px;border-radius:18px;border:4px solid #c8d3e6;background:var(--papel);color:var(--tinta);margin:12px 0 4px}
-.bienvenida input:focus{outline:none;border-color:var(--azul)}
-.saltar{display:block;margin:14px auto 0;color:var(--tinta-suave);font-weight:700;text-decoration:underline;font-size:1.05rem}
-
-/* Lectura en voz alta */
-.mic{display:inline-flex;align-items:center;gap:10px;background:var(--rojo);color:#fff;border-radius:18px;padding:12px 20px;font-family:var(--f-titulo);font-weight:800;font-size:1.2rem;box-shadow:0 5px 0 #d93e3e;margin:0 6px 14px}
-.mic:active{transform:translateY(3px);box-shadow:0 2px 0 #d93e3e}
-.mic.oyendo{background:var(--verde);box-shadow:0 5px 0 #1e9160;animation:latir 1s infinite}
-@keyframes latir{50%{transform:scale(1.06)}}
-.oracion button.w-ok,.texto button.w-ok{background:#c9f3dd;color:#137a4e}
-.oracion button.w-mal,.texto button.w-mal{background:#ffd9cc;color:#b3361b;text-decoration:underline wavy}
-.escuche{min-height:1.4em;color:var(--tinta-suave);font-size:1.05rem;margin:0 0 12px}
-.escuche b{color:var(--tinta)}
-.aviso{background:#fff1a8;border-radius:16px;padding:10px 14px;font-size:1rem;margin:0 auto 14px;max-width:62ch;text-align:left}
-.leo-panel{margin:18px auto 0;max-width:62ch;background:var(--cielo);border-radius:22px;padding:14px}
-.mic-vivo{display:inline-flex;align-items:center;gap:8px;background:var(--rojo);color:#fff;border-radius:999px;padding:6px 14px;font-weight:700;margin-bottom:8px}
-.mic-vivo .punto{width:12px;height:12px;border-radius:50%;background:#fff;animation:latir 1s infinite}
-.leo-panel.apagado .mic-vivo{background:var(--tinta-suave)}
-.leo-panel.apagado .punto{animation:none}
-.animo{font-family:var(--f-titulo);font-weight:800;font-size:clamp(1.4rem,5vw,2rem);color:var(--verde);min-height:1.3em;margin:4px 0}
-.animo.salta{animation:saltito .5s}
-@keyframes saltito{40%{transform:scale(1.15)}}
-.barra-lectura{display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin-top:6px}
-.chip.mic-ok{background:#c9f3dd}.chip.mic-no{background:#ffd9cc}
-.aviso .acciones{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.aviso .acciones button{background:var(--papel);border-radius:12px;padding:8px 12px;font-family:var(--f-titulo);font-weight:700;box-shadow:0 3px 0 var(--sombra)}
-.velo{position:fixed;inset:0;background:rgba(35,48,74,.45);display:grid;place-items:center;z-index:80;padding:16px}
-.velo[hidden]{display:none}
-.dlg{background:var(--papel);border-radius:24px;padding:22px;max-width:440px;width:100%;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,.25)}
-.dlg .em{font-size:3.4rem;line-height:1}
-.dlg h3{font-family:var(--f-titulo);font-size:1.6rem;margin:6px 0}
-.dlg p{font-size:1.08rem;margin:0 0 12px;text-align:left}
-.btn-mic-grande{background:var(--rojo);color:#fff;font-family:var(--f-titulo);font-weight:800;font-size:1.15rem;padding:12px 22px;border-radius:18px;box-shadow:0 6px 0 #d93e3e;margin:10px 4px 0}
-.btn-mic-grande:active{transform:translateY(4px)}
-footer{text-align:center;color:var(--tinta-suave);font-size:.9rem;margin-top:28px}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* lector */
+.progress-line{text-align:center;color:var(--muted);font-weight:700;margin-bottom:8px}
+.reader{background:#fff;border-radius:28px;padding:clamp(18px,4vw,34px) clamp(12px,3vw,26px);box-shadow:0 12px 34px rgba(43,45,66,.1);
+  text-align:center;font-size:clamp(1.9rem,6.5vw,3.1rem);line-height:1.7;min-height:170px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 4px;border:4px solid #fff0d4}
+.reader.listening{border-color:var(--bad)}
+.w{display:inline-block;padding:0 8px;border-radius:12px;cursor:pointer;transition:background .2s,color .2s,transform .2s}
+.w.next{box-shadow:inset 0 -5px 0 var(--yel)}
+.w.ok{background:#c9f5dd;color:#11703f}
+.w.bad{background:#ffd6de;color:#b3123c}
+.w.speak{background:var(--yel);transform:scale(1.08)}
+.hint{text-align:center;color:var(--muted);font-size:.95rem;margin:8px 0 0}
+.controls{display:flex;justify-content:center;align-items:center;gap:14px;margin:18px 0 6px;flex-wrap:wrap}
+.mic{width:96px;height:96px;border-radius:50%;border:none;cursor:pointer;font-size:2.6rem;color:#fff;background:var(--bad);box-shadow:0 6px 0 #c7304f;transition:transform .08s}
+.mic:active{transform:translateY(4px);box-shadow:0 2px 0 #c7304f}
+.mic.on{animation:pulse 1.1s infinite;background:#d62c55}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,71,111,.55),0 6px 0 #c7304f}70%{box-shadow:0 0 0 22px rgba(239,71,111,0),0 6px 0 #c7304f}100%{box-shadow:0 0 0 0 rgba(239,71,111,0),0 6px 0 #c7304f}}
+.miclabel{text-align:center;font-family:'Baloo 2';font-weight:800;font-size:1.15rem;min-height:1.6em;color:var(--bad)}
+.feedback{display:none;margin:12px auto 0;max-width:620px;background:#fff;border-radius:22px;padding:16px;text-align:center;box-shadow:0 6px 18px rgba(43,45,66,.08)}
+.feedback.show{display:block;animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:none;opacity:1}}
+.feedback .stars{font-size:2.4rem;letter-spacing:4px}
+.feedback .msg{font-family:'Baloo 2';font-weight:800;font-size:1.45rem}
+.feedback .heard{color:var(--muted);font-size:.95rem;margin-top:6px}
+.navrow{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
+.story-title{text-align:center;font-family:'Baloo 2';font-weight:800;font-size:clamp(1.5rem,5.5vw,2.2rem);margin:0 0 4px}
+.dots{display:flex;justify-content:center;gap:8px;margin:6px 0 12px}
+.dots i{width:14px;height:14px;border-radius:50%;background:#dfe2ec}
+.dots i.cur{background:var(--yel);transform:scale(1.25)}
+.dots i.done{background:var(--ok)}
+.storyfull{background:#fffdf6;border-radius:20px;padding:14px 18px;margin-top:18px;font-size:1.15rem;line-height:1.7;border:2px dashed #ffe1b0}
+.storyfull h3{margin:0 0 6px;font-size:1.1rem;color:var(--muted)}
+.storyfull p{margin:0}
+.storyfull .l{padding:2px 6px;border-radius:8px}
+.storyfull .l.cur{background:#fff1c2;font-weight:700}
+.storyfull .l.ok{color:#11703f}
+.storyfull .l.pend{color:#a3a7ba}
+.warn{background:#fff3cd;color:#7a5b00;border-radius:16px;padding:12px;margin:12px auto;max-width:620px;font-size:.98rem;text-align:center}
+.confetti{position:fixed;top:-40px;font-size:1.8rem;pointer-events:none;z-index:99;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.final{display:none;text-align:center;margin-top:16px}
+.final.show{display:block;animation:pop .4s ease}
+.final .big{font-size:3.4rem}
 </style>
+</head>
+<body>
 
-<div class="wrap">
-  <header>
-    <div class="logo"><div class="libro" aria-hidden="true">📖</div><span><b>Lecto</b><i>landia</i></span></div>
-    <div class="chips">
-      <button class="chip btn" id="chipNombre" title="Cambiar nombre">👤 <span id="nombreChip">Lector</span></button>
-      <div class="chip" title="Estrellas ganadas">⭐ <span id="estrellas">0</span></div>
-      <button class="chip btn" id="btnVoz" aria-pressed="true" title="Activar o silenciar la voz">🔊</button>
+<!-- ============ BIENVENIDA ============ -->
+<section id="sWelcome" class="screen active">
+  <div class="welcome">
+    <div class="logo">📖</div>
+    <h1>Lectolandia</h1>
+    <p class="sub">¡Leo en voz alta y aprendo jugando!</p>
+    <div class="panel">
+      <label for="nameInput">¿Cómo te llamas?</label>
+      <input id="nameInput" type="text" maxlength="20" placeholder="Escribe tu nombre" autocomplete="off">
+      <div class="opt">(Puedes dejarlo vacío si quieres)</div>
+      <div id="micState" class="micstate">🎤 El micrófono aún no está activado</div>
+      <div class="actions">
+        <button class="btn blue" id="btnMic">🎤 Activar micrófono</button>
+        <button class="btn" id="btnStart">¡Empezar a leer! 🚀</button>
+      </div>
     </div>
-  </header>
+    <div id="envWarn"></div>
+  </div>
+</section>
 
-  <section class="pantalla" id="nombre" hidden>
-    <form class="panel bienvenida" id="formNombre">
-      <div class="em">👋📖</div>
-      <h1>¡Bienvenido a Lectolandia!</h1>
-      <p class="ayuda">¿Cómo te llamas? Escribe tu nombre (no es obligatorio).</p>
-      <input id="campoNombre" maxlength="20" autocomplete="off" placeholder="Tu nombre" aria-label="Tu nombre">
-      <button class="grande-btn" type="submit">¡Empezar a leer!</button>
-      <button class="saltar" type="button" id="saltarNombre">Entrar sin nombre</button>
-    </form>
-  </section>
+<!-- ============ MENÚ ============ -->
+<section id="sMenu" class="screen">
+  <div class="hello" id="helloTxt">¡Hola!</div>
+  <div style="text-align:center"><span class="badge" id="menuStars">⭐ 0</span></div>
+  <div class="menu-cards">
+    <button class="mcard o" id="goOraciones">
+      <div class="ico">✏️</div><div class="tt">Oraciones</div><div class="ds">100 oraciones · 4 niveles</div>
+      <div class="bar"><i id="barO" style="width:0"></i></div><div class="ds" id="txtO">0 de 100</div>
+    </button>
+    <button class="mcard c" id="goCuentos">
+      <div class="ico">📚</div><div class="tt">Cuentos</div><div class="ds">50 cuentos cortos</div>
+      <div class="bar"><i id="barC" style="width:0"></i></div><div class="ds" id="txtC">0 de 50</div>
+    </button>
+  </div>
+  <div class="menu-foot">
+    <button class="btn ghost small" id="btnChangeName">👤 Cambiar nombre</button>
+    <button class="btn ghost small" id="btnReset">🔄 Borrar progreso</button>
+  </div>
+</section>
 
-  <section class="pantalla" id="inicio" hidden>
-    <h1 class="saludo">¡Hola! ¿Qué quieres leer hoy?</h1>
-    <p class="sub">Toca una palabra para escucharla. Cada respuesta correcta te da una estrella.</p>
-    <div class="mundos" id="mundos"></div>
-  </section>
+<!-- ============ LISTA ORACIONES ============ -->
+<section id="sOraciones" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" data-back="sMenu">⬅</button>
+    <h2>✏️ Oraciones</h2>
+    <span class="badge" id="oStars">⭐ 0</span>
+  </div>
+  <div class="tabs" id="levelTabs"></div>
+  <div class="grid" id="oGrid"></div>
+</section>
 
-  <section class="pantalla" id="oraciones" hidden>
-    <div class="barra"><button class="volver" data-volver>← Inicio</button><h2>🚂 Tren de Oraciones</h2></div>
-    <div class="panel" id="menuOraciones">
-      <p class="ayuda">Elige un nivel para leer 10 oraciones, o toca un número para ir a una oración.</p>
-      <div class="niveles" id="niveles"></div>
-      <h3 class="subt">Las 100 oraciones <small style="color:var(--tinta-suave);font-size:1rem" id="cuentaOr"></small></h3>
-      <div class="numeros" id="numeros"></div>
+<!-- ============ LISTA CUENTOS ============ -->
+<section id="sCuentos" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" data-back="sMenu">⬅</button>
+    <h2>📚 Cuentos</h2>
+    <span class="badge" id="cStars">⭐ 0</span>
+  </div>
+  <div class="sgrid" id="cGrid"></div>
+</section>
+
+<!-- ============ LECTOR ============ -->
+<section id="sReader" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" id="readerBack">⬅</button>
+    <h2 id="readerHead">Oración</h2>
+    <span class="badge" id="rStars">⭐ 0</span>
+  </div>
+  <div id="storyHeader" style="display:none">
+    <div class="story-title" id="storyTitle"></div>
+    <div class="dots" id="storyDots"></div>
+  </div>
+  <div class="progress-line" id="progLine"></div>
+  <div class="reader" id="readerBox"></div>
+  <p class="hint">👆 Toca una palabra para escucharla</p>
+
+  <div class="controls">
+    <button class="btn blue" id="btnListen">🔊 Escuchar</button>
+    <button class="mic" id="btnRead" aria-label="Leer en voz alta">🎤</button>
+    <button class="btn purple" id="btnRetry" style="display:none">🔁 Otra vez</button>
+  </div>
+  <div class="miclabel" id="micLabel">Toca el micrófono y lee en voz alta</div>
+
+  <div class="feedback" id="feedback">
+    <div class="stars" id="fbStars"></div>
+    <div class="msg" id="fbMsg"></div>
+    <div class="heard" id="fbHeard"></div>
+  </div>
+
+  <div class="final" id="finalBox">
+    <div class="big">🏆</div>
+    <div class="feedback show" style="display:block">
+      <div class="stars" id="finStars"></div>
+      <div class="msg" id="finMsg"></div>
     </div>
-    <div class="panel juego" id="juegoOraciones" hidden></div>
-  </section>
+  </div>
 
-  <section class="pantalla" id="cuentos" hidden>
-    <div class="barra"><button class="volver" data-volver>← Inicio</button><h2>🌳 Bosque de Cuentos</h2></div>
-    <div class="panel" id="listaCuentos">
-      <p class="ayuda">Lee solito o escucha el cuento. Al final responde las preguntas.</p>
-      <div class="filtros" id="filtrosCuentos" style="--acento:var(--morado)"></div>
-      <div class="cuentos" id="portadas"></div>
-    </div>
-    <div class="panel" id="lector" hidden></div>
-  </section>
+  <div class="navrow">
+    <button class="btn ghost" id="btnPrev">⬅ Anterior</button>
+    <button class="btn green" id="btnNext">Siguiente ➡</button>
+  </div>
 
-  <footer>Lectolandia · 100 oraciones y 50 cuentos · Micrófono: Chrome o Edge (laptop y Android) · Safari (iPhone y iPad)</footer>
-</div>
-<div hidden>
-</div>
+  <div class="storyfull" id="storyFull" style="display:none"><h3>📖 El cuento completo</h3><p id="storyFullTxt"></p></div>
+  <div id="readerWarn"></div>
+</section>
 
 <script>
-const COLORES=[["#ff5d5d","#d93e3e"],["#ff9f1c","#d97f00"],["#2ec27e","#1e9160"],["#3a86ff","#2563c9"],["#8b5cf6","#6d3fd6"],["#ff6fb5","#d94b92"]];
-
-/* ===== 100 ORACIONES: [oración, dibujo correcto, distractor, distractor] ===== */
-const ORACIONES=[
-["El gato toma leche.","🐱🥛","🐶🦴","🐟🌊"],
-["La luna brilla de noche.","🌙✨","☀️🏖️","🌧️☂️"],
-["El perro come un hueso.","🐶🦴","🐱🐟","🐰🥕"],
-["El conejo come zanahoria.","🐰🥕","🐶🦴","🐵🍌"],
-["El mono come plátano.","🐵🍌","🐰🥕","🐻🍯"],
-["El oso come miel.","🐻🍯","🐵🍌","🐭🧀"],
-["El ratón come queso.","🐭🧀","🐻🍯","🐔🌽"],
-["La gallina come maíz.","🐔🌽","🐭🧀","🐄🌾"],
-["Mi mamá lee un libro.","👩📖","👩🎸","👩💻"],
-["Papá maneja un auto.","👨🚗","👨🚲","👨✈️"],
-["El sol sale de día.","☀️","🌙","⭐"],
-["La niña come una manzana.","👧🍎","👦🍌","👧🍕"],
-["El niño toma sopa.","👦🍲","👦🍦","👧🍉"],
-["El pez nada en el agua.","🐟💧","🐦☁️","🐄🌾"],
-["El pájaro vuela alto.","🐦☁️","🐟💧","🐢🌱"],
-["La vaca da leche.","🐄🥛","🐔🥚","🐝🍯"],
-["La gallina pone huevos.","🐔🥚","🐄🥛","🐝🍯"],
-["La abeja hace miel.","🐝🍯","🐔🥚","🐄🥛"],
-["Me lavo las manos.","🧼🙌","🪥😁","🛏️😴"],
-["Me cepillo los dientes.","🪥😁","🧼🙌","🍽️😋"],
-["El bebé duerme.","👶😴","👶🍼","👶🛁"],
-["El bebé toma su biberón.","👶🍼","👶😴","👶🛁"],
-["Hace frío y cae nieve.","❄️⛄","☀️😎","🌧️☔"],
-["Hoy llueve mucho.","🌧️☔","☀️😎","❄️⛄"],
-["Hace calor en la playa.","☀️🏖️","❄️⛄","🌧️☔"],
-["El tren va por la vía.","🚆🛤️","🚢🌊","🚀🌕"],
-["El barco navega en el mar.","🚢🌊","🚆🛤️","✈️☁️"],
-["El avión vuela en el cielo.","✈️☁️","🚢🌊","🚗🛣️"],
-["La tortuga camina despacio.","🐢🐌","🐇💨","🐎🏁"],
-["El conejo corre rápido.","🐇💨","🐢🐌","🐌🍃"],
-["La rosa es roja.","🌹","🌻","🌼"],
-["El árbol tiene manzanas.","🌳🍎","🌵☀️","🌴🥥"],
-["Tengo dos globos.","🎈🎈","🎈","🎈🎈🎈"],
-["Hay tres estrellas.","⭐⭐⭐","⭐","⭐⭐"],
-["La rana salta en el charco.","🐸💦","🐍🌿","🐌🍃"],
-["El perro juega con la pelota.","🐶⚽","🐱🧶","🐦🌳"],
-["El gato juega con la lana.","🐱🧶","🐶⚽","🐭🧀"],
-["Mamá cocina arroz.","👩🍚","👩📖","👩🧹"],
-["Papá barre la casa.","👨🧹","👨🚗","👨🎸"],
-["Vamos a la escuela.","🏫🎒","🏥💊","🏖️🌊"],
-["El niño duerme en su cama.","👦🛏️","👦⚽","👦🛁"],
-["La abeja vuela sobre la flor.","🐝🌸","🦋🍃","🐞🍂"],
-["La mariposa se posa en una hoja.","🦋🍃","🐝🌸","🐛🍎"],
-["El gusano sale de la manzana.","🐛🍎","🦋🍃","🐜🍞"],
-["El doctor cura al niño enfermo.","🩺🤒","🍳😋","🎨🖌️"],
-["El bombero apaga el fuego.","🚒🔥","🚓🚨","🚑🩹"],
-["La ambulancia lleva al herido.","🚑🩹","🚒🔥","🚌🎒"],
-["El bus escolar lleva a los niños.","🚌🎒","🚑🩹","🚜🌾"],
-["El tractor trabaja en el campo.","🚜🌾","🚌🎒","🚤🌊"],
-["Comemos torta en mi cumpleaños.","🎂🎉","🎄🎁","🎃👻"],
-["En Navidad decoramos el árbol.","🎄🎁","🎂🎉","🐣🌷"],
-["Mi hermano toca la guitarra.","🎸🎶","🥁🎶","🎹🎶"],
-["La niña toca el tambor.","🥁","🎸","🎺"],
-["El abuelo pesca en el río.","🎣🐟","⛏️🪨","🌱💧"],
-["La abuela riega las plantas.","🌱💧","🎣🐟","🧶🧣"],
-["Pinto un dibujo con colores.","🎨🖍️","⚽🥅","🍽️🥄"],
-["Escribo mi nombre con un lápiz.","✏️📝","🎨🖌️","✂️📄"],
-["Corto el papel con tijeras.","✂️📄","✏️📝","🔨🪵"],
-["El reloj marca las ocho.","🕗","🕒","🕛"],
-["El cohete viaja a la luna.","🚀🌕","✈️☁️","🚢🌊"],
-["La araña teje su tela.","🕷️🕸️","🐝🍯","🐜🌾"],
-["Las hormigas llevan comida.","🐜🍞","🕷️🕸️","🐞🌸"],
-["El caracol lleva su casa en la espalda.","🐌","🐛","🐞"],
-["El pingüino vive en el hielo.","🐧❄️","🐫🏜️","🐒🌴"],
-["El camello camina por el desierto.","🐫🏜️","🐧❄️","🐬🌊"],
-["El delfín salta en el mar.","🐬🌊","🐫🏜️","🦅⛰️"],
-["El cóndor vuela sobre las montañas.","🦅⛰️","🐬🌊","🐧❄️"],
-["La llama vive en los Andes.","🦙⛰️","🐄🌾","🐊💧"],
-["El cocodrilo descansa en el río.","🐊💧","🦙⛰️","🦒🌳"],
-["La jirafa come hojas de árboles altos.","🦒🌳","🐊💧","🐘💦"],
-["El elefante se baña con su trompa.","🐘💦","🦒🌳","🦁🌅"],
-["El león ruge muy fuerte.","🦁","🐑","🐇"],
-["La oveja nos da lana.","🐑🧶","🐄🥛","🐔🥚"],
-["Me pongo la chompa porque hace frío.","🧥🥶","🩱☀️","☂️🌧️"],
-["Uso paraguas cuando llueve.","☂️🌧️","🧥🥶","🕶️☀️"],
-["Espero la luz verde del semáforo para cruzar la pista.","🚦🚸","🚀🌕","🎣🐟"],
-["El agricultor siembra arroz en los campos de Lambayeque.","🌾💧","🍦🍫","🏙️🚕"],
-["Los pescadores salen al mar en sus caballitos de totora.","🛶🌊","✈️☁️","🚂🛤️"],
-["Después de jugar fútbol, tomé mucha agua porque tenía sed.","⚽💧","🎹🎶","📺🍿"],
-["El astronauta mira la Tierra desde su nave espacial.","🚀🌍","🚢🐳","🚲🌳"],
-["Mi hermana sopló las velas y pidió un deseo.","🎂🕯️","🎄⭐","🎃🍬"],
-["El volcán lanza humo y lava caliente.","🌋🔥","🏔️❄️","🏝️🌴"],
-["En la noche, el búho abre sus grandes ojos.","🦉🌙","🐓🌅","🐝🌸"],
-["El gallo canta cuando sale el sol.","🐓🌅","🦉🌙","🐟🌊"],
-["La ballena es el animal más grande del océano.","🐋🌊","🐜🌱","🦅☁️"],
-["Guardé mis juguetes en la caja antes de dormir.","🧸📦","🍽️🧽","🎒🏫"],
-["Lavamos los platos después del almuerzo.","🍽️🧽","🧸📦","⚽🥅"],
-["El cartero trae una carta para mi familia.","📮✉️","📞☎️","📺🎬"],
-["Con el telescopio podemos ver los planetas.","🔭🪐","🔬🦠","📷🌸"],
-["Con el microscopio vemos cosas muy pequeñas.","🔬🦠","🔭🪐","📷🌸"],
-["El arcoíris aparece cuando sale el sol después de la lluvia.","🌈","🌪️","⚡"],
-["El rayo ilumina el cielo durante la tormenta.","⛈️⚡","🌈☀️","❄️⛄"],
-["La semilla se convirtió en un árbol grande.","🌱➡️🌳","🥚➡️🐣","🐛➡️🦋"],
-["El pollito salió del huevo.","🥚➡️🐣","🌱➡️🌳","🐛➡️🦋"],
-["La oruga se transformó en mariposa.","🐛➡️🦋","🥚➡️🐣","🌱➡️🌳"],
-["El hielo se derrite con el calor del sol.","🧊☀️💧","🍦❄️","🔥🪵"],
-["Reciclamos las botellas de plástico para cuidar el planeta.","♻️🌍","🗑️🔥","🚗💨"],
-["Mi abuela teje una chalina de colores para el invierno.","🧶🧣","🍳🥚","📚✏️"],
-["El equipo celebró porque ganó el campeonato.","🏆🎉","😢🌧️","😴🛏️"],
-["Al terminar el día, el cielo se llena de estrellas.","🌃⭐","🌅☀️","🌧️☂️"]
+/* =====================================================
+   CONTENIDO: 100 ORACIONES
+===================================================== */
+const ORACIONES = [
+// Nivel 1 – cortitas
+"Mi mamá me ama.","El sol brilla.","Mi perro ladra.","La casa es roja.","Yo como pan.",
+"El gato duerme.","Papá lee un libro.","La luna es blanca.","Mi pelota es azul.","El pato nada.",
+"Me gusta el mango.","La flor huele rico.","Yo tomo leche.","El árbol es alto.","Mi oso es suave.",
+"La vaca da leche.","El niño salta.","La niña canta.","Mi abuela cocina.","El pez es dorado.",
+"Tengo una muñeca.","El cielo es azul.","Mi tío tiene una moto.","La mesa es de madera.","Yo lavo mis manos.",
+// Nivel 2 – medianas
+"El perro corre en el parque.","Mi hermana pinta un dibujo bonito.","La gallina puso un huevo.","Mi papá maneja un carro grande.","Los pájaros cantan en la mañana.",
+"Me gusta jugar con mis amigos.","La maestra escribe en la pizarra.","El caballo come pasto verde.","Mi mamá compra fruta en el mercado.","Hoy vamos a la playa.",
+"El conejo come una zanahoria.","Mi abuelo cuida sus plantas.","La mariposa vuela sobre las flores.","Yo guardo mis juguetes en la caja.","El tren pasa por el puente.",
+"Mi gata tiene tres gatitos.","La lluvia moja el jardín.","Mi amigo trae su pelota nueva.","El panadero hace pan caliente.","Los niños juegan en el recreo.",
+"Mi hermano duerme en su cama.","La tortuga camina muy lento.","Yo ayudo a mi mamá en casa.","El mono come un plátano.","Mi escuela tiene un patio grande.",
+// Nivel 3 – largas
+"Todas las mañanas desayuno pan con queso y leche.","El agricultor siembra maíz en su chacra.","Mi familia visita a los abuelos los domingos.","Los peces de colores nadan en la pecera.","El bombero apaga el fuego con mucha agua.",
+"Cuando llueve me pongo mis botas amarillas.","La doctora revisa a los niños con cuidado.","Mi perro mueve la cola cuando llego a casa.","En el zoológico vimos un león y una jirafa.","La abeja hace miel dulce en su panal.",
+"Mis amigos y yo armamos un castillo de arena.","El cartero trae cartas a todas las casas.","Antes de dormir mi mamá me lee un cuento.","El burrito carga leña por el camino.","Me lavo los dientes después de cada comida.",
+"La señora vende tamales en la esquina.","El avión vuela muy alto sobre las nubes.","En el huerto crecen tomates, lechugas y zanahorias.","Mi hermanita aprende a caminar con cuidado.","Los pescadores salen al mar en sus botes.",
+"El arcoíris tiene muchos colores bonitos.","Yo riego las plantas de mi jardín.","La hormiga lleva una hoja a su casa.","Mi papá y yo volamos una cometa.","Los pollitos siguen a su mamá gallina.",
+// Nivel 4 – desafío
+"El niño leyó un libro muy interesante sobre los dinosaurios.","Durante el verano mi familia viaja a la playa para descansar.","La maestra nos enseñó a sumar y restar con palitos de colores.","Mi abuela prepara un arroz con pato delicioso para el almuerzo.","Los estudiantes cuidan el planeta separando la basura en tachos.",
+"El colibrí mueve sus alas tan rápido que casi no se ven.","En la noche las estrellas brillan en el cielo oscuro.","Mi hermano mayor me ayuda a hacer las tareas de la escuela.","El caballito de paso baila con elegancia en la fiesta del pueblo.","Los niños sembraron un árbol en el patio de la escuela.",
+"La araña teje su telaraña con mucha paciencia en la ventana.","Cuando termino mis tareas salgo a jugar con mi bicicleta.","El cocinero preparó una sopa caliente para todos los invitados.","Las ballenas son animales enormes que viven en el océano.","Mi mamá dice que leer todos los días nos hace más inteligentes.",
+"El viento fuerte movió las ramas de los árboles del parque.","Los bomberos son valientes y siempre ayudan a las personas.","En la biblioteca hay muchos libros de cuentos y aventuras.","La luna ilumina el camino de los viajeros durante la noche.","Mi perrito aprendió a sentarse y a dar la pata.",
+"Las semillas necesitan agua, tierra y sol para crecer.","Mi papá construyó una casita de madera para los pájaros.","Los niños respetan las reglas cuando juegan en equipo.","El cóndor vuela majestuoso sobre las altas montañas de los Andes.","Cada día aprendo algo nuevo y me siento muy feliz."
 ];
-const NIVELES_OR=[
- {t:"Fácil",d:"Oraciones 1 a 40 · 5-6 años",de:0,a:40,c:2},
- {t:"Medio",d:"Oraciones 41 a 75 · 6-8 años",de:40,a:75,c:3},
- {t:"Difícil",d:"Oraciones 76 a 100 · 8-12 años",de:75,a:100,c:4},
- {t:"Sorpresa",d:"10 al azar de las 100",de:0,a:100,c:5}
+const NIVELES = [
+  {n:"🌱 Nivel 1", from:0},{n:"🌿 Nivel 2", from:25},{n:"🌳 Nivel 3", from:50},{n:"🏔️ Nivel 4", from:75}
 ];
 
-/* ===== 50 CUENTOS: n = nivel (1-4). Preguntas: "pregunta|correcta|incorrecta|incorrecta" ===== */
-const NIVELES_C={1:"Inicial · 5-6 años",2:"1.º y 2.º grado",3:"3.º y 4.º grado",4:"5.º y 6.º grado"};
-const CUENTOS=[
-{n:1,t:"El pato Paco",em:"🦆🐸",x:"Paco es un pato. Paco vive en la laguna. Un día Paco vio una rana. La rana saltó al agua. Paco y la rana nadaron juntos. ¡Ahora son amigos!",p:["¿Quién es Paco?|Un pato|Un gato|Un perro","¿Dónde vive Paco?|En la laguna|En una casa|En un árbol","¿A quién vio Paco?|A una rana|A una vaca|A un pez"]},
-{n:1,t:"La pelota de Lola",em:"👧⚽",x:"Lola tiene una pelota roja. La pelota rueda y rueda. La pelota cae en el pasto. El perro Toby la trae en su boca. Lola abraza a Toby. ¡Gracias, Toby!",p:["¿De qué color es la pelota?|Roja|Azul|Verde","¿Dónde cayó la pelota?|En el pasto|En el río|En la cama","¿Quién trajo la pelota?|El perro Toby|Un gato|La mamá"]},
-{n:1,t:"El sol dormilón",em:"☀️🐓",x:"El sol no quería salir. Estaba muy cansado. El gallo cantó: ¡quiquiriquí! El sol abrió los ojos. Salió feliz y calentó la tierra.",p:["¿Cómo estaba el sol?|Cansado|Enojado|Mojado","¿Quién cantó?|El gallo|El perro|El pato","¿Qué hizo el sol al salir?|Calentó la tierra|Se fue a dormir|Se escondió"]},
-{n:1,t:"Mimi la gata",em:"🐱🥛",x:"Mimi es una gata blanca. A Mimi le gusta la leche. Un día Mimi vio un ratón. El ratón corrió a su casita. Mimi se quedó tomando su leche.",p:["¿De qué color es Mimi?|Blanca|Negra|Café","¿Qué le gusta a Mimi?|La leche|El pan|La sopa","¿Qué vio Mimi?|Un ratón|Un pájaro|Un pez"]},
-{n:1,t:"La nube Nina",em:"☁️🌷",x:"Nina es una nube pequeña. Nina viaja por el cielo. Abajo, las flores tienen sed. Nina deja caer gotas de lluvia. Las flores beben y sonríen.",p:["¿Quién es Nina?|Una nube|Una flor|Una niña","¿Quiénes tenían sed?|Las flores|Los peces|Los niños","¿Qué hizo Nina?|Dejó caer lluvia|Bailó|Se durmió"]},
-{n:1,t:"El oso goloso",em:"🐻🍯",x:"Bruno es un oso muy goloso. Bruno busca miel en el bosque. Encuentra un panal en un árbol. Las abejas le dicen: ¡pide permiso! Bruno pide permiso y las abejas le regalan un poco de miel.",p:["¿Qué buscaba Bruno?|Miel|Pescado|Frutas","¿Dónde estaba el panal?|En un árbol|En una cueva|En el río","¿Qué hizo Bruno?|Pidió permiso|Rompió el panal|Se fue llorando"]},
-{n:1,t:"Mi globo azul",em:"🎈💨",x:"Tengo un globo azul. El viento sopla fuerte. ¡Mi globo se escapa! Sube y sube hasta las nubes. Papá me compra otro globo y lo amarra a mi mano.",p:["¿De qué color era el globo?|Azul|Rojo|Amarillo","¿Por qué se escapó el globo?|Por el viento|Porque se reventó|Porque lo soltó el perro","¿Qué hizo papá?|Compró otro globo|Lo atrapó|Se enojó"]},
-{n:1,t:"La tortuga Tita",em:"🐢🌳",x:"Tita es una tortuga. Tita camina muy despacio. Sus amigos la esperan en el parque. Tita llega tarde, pero llega feliz. Sus amigos la aplauden.",p:["¿Qué animal es Tita?|Una tortuga|Un conejo|Una rana","¿Cómo camina Tita?|Despacio|Rápido|Saltando","¿Qué hicieron sus amigos?|La aplaudieron|Se fueron|Se rieron"]},
-{n:1,t:"El pollito Pío",em:"🐣🐔",x:"Pío es un pollito amarillo. Pío se perdió en el corral. Pío llamó: ¡pío, pío! Mamá gallina lo escuchó. Mamá gallina lo cubrió con sus alas.",p:["¿De qué color es Pío?|Amarillo|Blanco|Negro","¿Dónde se perdió?|En el corral|En la playa|En la escuela","¿Quién lo escuchó?|Mamá gallina|El gato|El granjero"]},
-{n:1,t:"La fiesta de Ana",em:"🎂🎁",x:"Hoy es el cumpleaños de Ana. Ana cumple seis años. Sus amigos le traen regalos. Mamá hizo una torta de chocolate. Ana sopla las velas y todos cantan.",p:["¿Cuántos años cumple Ana?|Seis|Tres|Diez","¿De qué era la torta?|De chocolate|De fresa|De vainilla","¿Qué hizo Ana?|Sopló las velas|Lloró|Se durmió"]},
-{n:1,t:"El sapo cantor",em:"🐸🌙",x:"En el charco vive un sapo. El sapo canta: ¡croac, croac! Los grillos cantan con él. Juntos hacen una canción en la noche. La luna los escucha contenta.",p:["¿Dónde vive el sapo?|En el charco|En el mar|En la casa","¿Quiénes cantan con él?|Los grillos|Los perros|Los peces","¿Cuándo cantan?|En la noche|En la mañana|Al mediodía"]},
-{n:1,t:"Las manos limpias",em:"🧼🙌",x:"Beto jugó en la tierra. Sus manos quedaron sucias. Mamá le dijo: lávate las manos. Beto usó agua y jabón. Ahora Beto puede comer.",p:["¿Dónde jugó Beto?|En la tierra|En la piscina|En la cama","¿Qué usó para lavarse?|Agua y jabón|Solo una toalla|Pintura","¿Qué puede hacer ahora?|Comer|Dormir|Ir al río"]},
-{n:1,t:"El mono Momo",em:"🐵🍌",x:"Momo es un mono travieso. Momo salta de rama en rama. Momo ve un plátano grande. Lo comparte con su hermanita. Los dos comen felices.",p:["¿Cómo es Momo?|Travieso|Triste|Dormilón","¿Qué vio Momo?|Un plátano|Una manzana|Una piña","¿Con quién compartió?|Con su hermanita|Con un león|Con nadie"]},
-{n:1,t:"La estrella Lucía",em:"⭐🪟",x:"Lucía es una estrella. Lucía brilla en la noche. Un niño la mira desde su ventana. El niño pide un deseo. Lucía le guiña su luz.",p:["¿Cuándo brilla Lucía?|En la noche|En el día|Nunca","¿Desde dónde la mira el niño?|Desde su ventana|Desde un barco|Desde el techo","¿Qué pidió el niño?|Un deseo|Una torta|Un juguete"]},
-{n:2,t:"La semilla de Sofía",em:"🌱🌻",x:"Sofía encontró una semilla pequeñita. La plantó en una maceta con tierra. Cada mañana le echaba un poco de agua. El sol la calentaba con sus rayos. Una semana después, salió una hojita verde. Al mes, creció una flor amarilla y grande. Sofía aprendió que las plantas necesitan cuidado y paciencia.",p:["¿Qué encontró Sofía?|Una semilla|Una piedra|Una moneda","¿Qué le echaba cada mañana?|Agua|Leche|Arena","¿Qué aprendió Sofía?|Que las plantas necesitan cuidado|Que las flores son malas|Que el sol es frío"]},
-{n:2,t:"El perrito perdido",em:"🐶🏠",x:"Un perrito apareció en la puerta de Carlos. Tenía frío y hambre. Carlos le dio comida y una manta. Al día siguiente pegaron carteles en el barrio. Una señora llegó llorando de alegría: era su perrito Max. Carlos se sintió feliz por ayudar.",p:["¿Cómo estaba el perrito?|Con frío y hambre|Muy contento|Dormido","¿Qué hicieron al día siguiente?|Pegaron carteles|Fueron a la playa|Compraron otro perro","¿Cómo se llamaba el perrito?|Max|Toby|Bobi"]},
-{n:2,t:"El arcoíris de Rosa",em:"🌈👧",x:"Llovió toda la mañana en el pueblo. Rosa miraba triste por la ventana. De pronto salió el sol. En el cielo apareció un arcoíris de siete colores. Rosa salió corriendo a verlo con su hermano.",p:["¿Qué pasó en la mañana?|Llovió|Nevó|Hizo mucho calor","¿Cuántos colores tenía el arcoíris?|Siete|Tres|Diez","¿Con quién salió Rosa?|Con su hermano|Con su abuela|Sola"]},
-{n:2,t:"La hormiga y la paloma",em:"🐜🕊️",x:"Una hormiga cayó al río y no podía salir. Una paloma la vio y le lanzó una hoja. La hormiga subió a la hoja y se salvó. Días después, un cazador quiso atrapar a la paloma. La hormiga le picó el pie y el cazador falló. Así, la hormiga devolvió el favor.",p:["¿Dónde cayó la hormiga?|Al río|A un pozo|A la arena","¿Qué le lanzó la paloma?|Una hoja|Una piedra|Una rama grande","¿Cómo ayudó la hormiga a la paloma?|Picó al cazador|Llamó a la policía|La escondió"]},
-{n:2,t:"El caracol viajero",em:"🐌🌊",x:"Caco el caracol quería conocer el mar. Caminó despacito durante muchos días. En el camino conoció a una lagartija y a un escarabajo. Por fin sintió el olor salado del mar. Caco sonrió: había llegado.",p:["¿Qué quería Caco?|Conocer el mar|Comer hojas|Dormir","¿A quiénes conoció?|A una lagartija y un escarabajo|A un león y un tigre|A dos peces","¿Cómo supo que llegó?|Por el olor salado|Porque se lo dijeron|Por un letrero"]},
-{n:2,t:"La lonchera de Pedro",em:"🍎🥪",x:"Pedro olvidó su lonchera en casa. En el recreo tenía mucha hambre. Su amiga Lucía le invitó la mitad de su sándwich. Pedro le agradeció con una sonrisa. Al día siguiente, Pedro trajo fruta para los dos.",p:["¿Qué olvidó Pedro?|Su lonchera|Su cuaderno|Su chompa","¿Qué le invitó Lucía?|La mitad de su sándwich|Un helado|Una galleta","¿Qué trajo Pedro al día siguiente?|Fruta para los dos|Nada|Caramelos"]},
-{n:2,t:"El viento juguetón",em:"🍃🪁",x:"El viento sopla en el parque. Levanta las hojas secas y las hace bailar. Despeina a los niños y mueve las cometas. Una señora persigue su sombrero. Todos se ríen del viento juguetón.",p:["¿Qué levanta el viento?|Las hojas secas|Las piedras|Los árboles","¿Qué persigue la señora?|Su sombrero|Su perro|Su bolso","¿Qué hacen todos?|Se ríen|Lloran|Se esconden"]},
-{n:2,t:"El dragón que tenía miedo",em:"🐉🔦",x:"Había un dragón grande y verde. Todos creían que era feroz. Pero el dragón tenía miedo a la oscuridad. Una niña le regaló una linterna. Desde entonces, el dragón y la niña son grandes amigos.",p:["¿De qué color era el dragón?|Verde|Rojo|Azul","¿A qué le tenía miedo?|A la oscuridad|A los perros|Al agua","¿Qué le regaló la niña?|Una linterna|Una manta|Un pastel"]},
-{n:2,t:"La gallina de los huevos de oro",em:"🐔🥚",x:"Un granjero tenía una gallina que ponía un huevo de oro cada día. Con el tiempo, el granjero se volvió muy ambicioso. Pensó que la gallina guardaba mucho oro dentro. Quiso tenerlo todo de una sola vez. Al final se quedó sin gallina y sin huevos.",p:["¿Qué ponía la gallina?|Un huevo de oro|Un huevo de chocolate|Muchos huevos blancos","¿Cómo se volvió el granjero?|Ambicioso|Generoso|Perezoso","¿Cómo terminó el granjero?|Sin gallina y sin huevos|Muy rico|Con muchas gallinas"]},
-{n:2,t:"Mi primer día de clases",em:"🎒🏫",x:"Valeria estaba nerviosa en su primer día de clases. Su mochila nueva era morada. La profesora la recibió con un abrazo. En el recreo conoció a Camila. Al salir, Valeria le dijo a su mamá: ¡quiero volver mañana!",p:["¿Cómo estaba Valeria?|Nerviosa|Enojada|Aburrida","¿De qué color era su mochila?|Morada|Roja|Verde","¿A quién conoció en el recreo?|A Camila|A Sofía|A Ana"]},
-{n:2,t:"El ratón y el león",em:"🐭🦁",x:"Un león dormía bajo un árbol. Un ratoncito lo despertó sin querer. El león lo atrapó, pero lo dejó ir. Días después, el león quedó atrapado en una red. El ratón mordió la red y lo liberó. Los pequeños también pueden ayudar.",p:["¿Dónde dormía el león?|Bajo un árbol|En una cueva|En el río","¿Qué hizo el león con el ratón?|Lo dejó ir|Lo encerró|Lo asustó","¿Cómo ayudó el ratón?|Mordió la red|Llamó a otros leones|Trajo agua"]},
-{n:2,t:"La cometa de Diego",em:"🪁⛰️",x:"En agosto, Diego hizo una cometa con papel y carrizo. Le pintó una cara sonriente. Fue a la loma con su papá. El viento la levantó muy alto. Diego sentía que volaba con ella.",p:["¿En qué mes hizo la cometa?|Agosto|Diciembre|Marzo","¿Con qué la hizo?|Papel y carrizo|Plástico y metal|Tela y vidrio","¿Adónde fue a volarla?|A la loma|A la playa|Al mercado"]},
-{n:2,t:"La vaca Manchas",em:"🐄🧀",x:"Manchas es una vaca blanca con manchas negras. Cada mañana, don Julio la ordeña. Con la leche, doña Marta prepara queso fresco. Los niños del pueblo compran queso en su casa. Manchas mueve la cola contenta.",p:["¿Cómo es Manchas?|Blanca con manchas negras|Café|Toda negra","¿Quién la ordeña?|Don Julio|Doña Marta|Los niños","¿Qué prepara doña Marta?|Queso fresco|Pan|Helado"]},
-{n:2,t:"El pastorcito mentiroso",em:"🐑🐺",x:"Un pastorcito cuidaba ovejas. Para divertirse, gritó: ¡el lobo, el lobo! La gente corrió a ayudarlo, pero no había lobo. Lo hizo otra vez y la gente se enojó. Cuando el lobo llegó de verdad, nadie le creyó. El pastorcito aprendió a decir siempre la verdad.",p:["¿Qué cuidaba el pastorcito?|Ovejas|Vacas|Gallinas","¿Por qué gritaba?|Para divertirse|Porque tenía miedo|Porque se perdió","¿Qué aprendió?|A decir siempre la verdad|A correr rápido|A cazar lobos"]},
-{n:3,t:"El algarrobo del abuelo",em:"🌳👴",x:"En Mórrope, el abuelo Martín tenía un algarrobo muy viejo detrás de su casa. Sus ramas eran anchas y daban una sombra fresca en los días de calor. Por las tardes, los nietos se sentaban debajo del árbol para escuchar sus historias. El abuelo les contaba que el algarrobo resiste la sequía porque sus raíces buscan agua muy profundo. Un verano, el árbol se llenó de vainas dulces y amarillas. Todos ayudaron a recogerlas, y la abuela preparó algarrobina para el desayuno. Desde ese día, los nietos prometieron cuidar el algarrobo como un tesoro de la familia.",p:["¿Dónde vivía el abuelo Martín?|En Mórrope|En Cusco|En Lima","¿Por qué el algarrobo resiste la sequía?|Sus raíces buscan agua profundo|Lo riegan todos los días|Vive dentro de la casa","¿Qué preparó la abuela con las vainas?|Algarrobina|Chicha morada|Mermelada de fresa"]},
-{n:3,t:"Juan y el caballito de totora",em:"🛶🌊",x:"Juan vivía cerca del mar de Pimentel. Su papá era pescador y salía cada madrugada en un caballito de totora. Un día, Juan le pidió que le enseñara a construir uno. Juntos cortaron la totora, la secaron al sol y la amarraron con fuerza. Juan se cansó, pero su papá le contó que los pescadores mochicas hacían lo mismo hace mucho tiempo. Cuando terminaron, Juan sintió orgullo de continuar una tradición tan antigua.",p:["¿En qué salía a pescar el papá de Juan?|En un caballito de totora|En una lancha a motor|En un barco grande","¿Qué hicieron con la totora después de cortarla?|La secaron al sol|La quemaron|La vendieron","¿Qué sintió Juan al terminar?|Orgullo|Miedo|Aburrimiento"]},
-{n:3,t:"La leyenda de Naylamp",em:"🛶🗿",x:"Cuenta la leyenda que, hace muchísimo tiempo, llegó por el mar una flota de balsas. La guiaba un señor llamado Naylamp. Traía con él a su corte y un ídolo de piedra verde llamado Yampallec. Naylamp fundó un reino en estas tierras. Muchos dicen que el nombre de Lambayeque viene de Yampallec. Cuando Naylamp murió, sus seguidores contaron que le salieron alas y voló al cielo.",p:["¿Cómo llegó Naylamp?|Por el mar en balsas|Caminando por la sierra|Volando","¿Cómo se llamaba el ídolo?|Yampallec|Sipán|Chotuna","¿Qué nombre vendría de Yampallec?|Lambayeque|Chiclayo|Lima"]},
-{n:3,t:"El tesoro del Señor de Sipán",em:"🏺👑",x:"En 1987, un grupo de arqueólogos encontró una tumba en Huaca Rajada, en Lambayeque. Allí descansaba el Señor de Sipán, un gobernante mochica. Lo acompañaban joyas de oro, plata y piedras preciosas. El arqueólogo Walter Alva dirigió la investigación. Hoy podemos ver esos tesoros en el Museo Tumbas Reales de Sipán.",p:["¿En qué año encontraron la tumba?|En 1987|En 1950|En 2010","¿Quién era el Señor de Sipán?|Un gobernante mochica|Un rey español|Un pescador","¿Dónde podemos ver sus tesoros?|En el Museo Tumbas Reales de Sipán|En la playa|En una mina"]},
-{n:3,t:"El picaflor y el incendio",em:"🐦🔥",x:"Un día hubo un incendio en el bosque. Todos los animales huyeron asustados. Solo un pequeño picaflor iba y venía llevando gotitas de agua en su pico. El oso le preguntó: ¿crees que así apagarás el fuego? El picaflor respondió: yo hago mi parte. Poco a poco, los demás animales empezaron a ayudar.",p:["¿Qué llevaba el picaflor en su pico?|Gotitas de agua|Hojas|Piedras","¿Qué respondió el picaflor?|Yo hago mi parte|No sé|Tengo miedo","¿Qué hicieron los demás animales?|Empezaron a ayudar|Se burlaron|Se durmieron"]},
-{n:3,t:"Vacaciones en la sierra",em:"⛰️🐄",x:"En julio, Mateo viajó con su familia a Cajamarca. El aire era frío y el cielo muy azul. Visitaron una granja donde hacían quesos y manjar blanco. Mateo ordeñó una vaca por primera vez. Por la noche, su abuela le contó leyendas junto al fogón. Mateo regresó a casa con muchas historias para contar.",p:["¿Adónde viajó Mateo?|A Cajamarca|A Tumbes|A Iquitos","¿Qué hacían en la granja?|Quesos y manjar blanco|Chocolates|Pan","¿Qué hizo Mateo por primera vez?|Ordeñó una vaca|Montó bicicleta|Nadó en el mar"]},
-{n:3,t:"La zorra y las uvas",em:"🦊🍇",x:"Una zorra hambrienta vio unas uvas en lo alto de una parra. Saltó una y otra vez para alcanzarlas. No pudo llegar, porque estaban muy altas. Se alejó diciendo: de todas formas, esas uvas están verdes. Así actúan quienes desprecian lo que no pueden conseguir.",p:["¿Qué vio la zorra?|Unas uvas|Unas manzanas|Un queso","¿Por qué no las alcanzó?|Estaban muy altas|Estaban podridas|Alguien se las llevó","¿Qué dijo la zorra al irse?|Que estaban verdes|Que eran deliciosas|Que volvería mañana"]},
-{n:3,t:"El robot que aprendió a reír",em:"🤖😂",x:"En un laboratorio vivía un robot llamado Tico. Tico sabía sumar, restar y limpiar, pero no sabía reír. Una niña le contó un chiste sobre un pingüino con bufanda. Tico pensó en el chiste durante tres segundos. Después, sus luces parpadearon y soltó una carcajada metálica. Desde ese día, Tico colecciona chistes.",p:["¿Cómo se llamaba el robot?|Tico|Robi|Max","¿Qué no sabía hacer Tico?|Reír|Sumar|Limpiar","¿Qué colecciona ahora Tico?|Chistes|Tornillos|Monedas"]},
-{n:3,t:"El concurso de dibujo",em:"🎨🏞️",x:"En la escuela organizaron un concurso de dibujo sobre el medio ambiente. Andrea dibujó un río limpio con peces de colores. Su compañero Raúl dibujó un bosque lleno de animales. Andrea no ganó el primer lugar y se puso triste. Raúl la animó diciéndole que su dibujo era muy bonito. Juntos decidieron pintar un mural para toda la escuela.",p:["¿Sobre qué era el concurso?|El medio ambiente|Los deportes|La familia","¿Qué dibujó Andrea?|Un río limpio con peces|Un bosque|Una ciudad","¿Qué decidieron hacer juntos?|Pintar un mural|Dejar de dibujar|Romper los dibujos"]},
-{n:3,t:"La liebre y la tortuga",em:"🐇🐢",x:"La liebre se burlaba de la tortuga por ser lenta. La tortuga la retó a una carrera. La liebre corrió muy rápido y, confiada, se echó a dormir. La tortuga siguió caminando sin detenerse. Cuando la liebre despertó, la tortuga ya había llegado a la meta.",p:["¿Por qué se burlaba la liebre?|Porque la tortuga era lenta|Porque era pequeña|Porque era verde","¿Qué hizo la liebre durante la carrera?|Se echó a dormir|Se cayó|Se perdió","¿Quién ganó la carrera?|La tortuga|La liebre|Nadie"]},
-{n:3,t:"El huerto escolar",em:"🥬🌱",x:"Los alumnos de cuarto grado decidieron hacer un huerto en la escuela. Prepararon la tierra con abono y sembraron lechugas, rabanitos y culantro. Cada grupo tenía un día para regar. Algunas plantas se secaron porque un grupo olvidó su turno. Aprendieron que todos deben cumplir su responsabilidad. Al final cosecharon e hicieron una ensalada para compartir.",p:["¿Qué sembraron?|Lechugas, rabanitos y culantro|Papas y yuca|Rosas","¿Por qué se secaron algunas plantas?|Un grupo olvidó regar|Llovió mucho|Se las comieron los pájaros","¿Qué hicieron al final?|Una ensalada|Una sopa|Un jugo"]},
-{n:3,t:"La tienda de doña Rosa",em:"🏪🍞",x:"Doña Rosa tiene una tienda en la esquina del barrio. Cada mañana abre a las seis y vende pan caliente. Un día, un niño le pagó de más sin darse cuenta. Doña Rosa lo llamó y le devolvió su vuelto. El niño se lo contó a su mamá, y ella felicitó a doña Rosa por su honradez.",p:["¿A qué hora abre la tienda?|A las seis|A las diez|A las doce","¿Qué vende en la mañana?|Pan caliente|Helados|Juguetes","¿Qué valor muestra doña Rosa?|La honradez|La pereza|El miedo"]},
-{n:4,t:"La estrella que no brillaba",em:"⭐🌌",x:"Lía era una estrella joven que vivía en un rincón del cielo. Cada noche miraba a sus hermanas brillar con fuerza, mientras ella apenas lanzaba una luz débil. Avergonzada, decidió esconderse detrás de una nube para que nadie notara su pequeño resplandor. Una noche, un barco pesquero se perdió en medio de una tormenta. Las estrellas grandes estaban cubiertas por nubes espesas, y los marineros no sabían hacia dónde remar. Lía era la única que quedaba en un claro del cielo; aunque tenía miedo, salió de su escondite y brilló con todas sus fuerzas. Su luz, pequeña pero constante, guio al barco hasta la orilla. Esa noche Lía comprendió que no hace falta ser la más brillante para ser importante.",p:["¿Por qué Lía se escondió detrás de una nube?|Le daba vergüenza su luz débil|Tenía frío|Quería dormir","¿Qué palabra describe mejor a Lía al final?|Valiente|Perezosa|Egoísta","¿Cuál es la enseñanza del cuento?|Todos podemos ser importantes a nuestra manera|Hay que ser el más fuerte|Las tormentas son divertidas"]},
-{n:4,t:"El reloj del abuelo",em:"⏱️🔧",x:"El abuelo Ernesto tenía un reloj de bolsillo que había heredado de su padre. Un día, el reloj dejó de funcionar y el abuelo se puso muy triste. Su nieta Daniela, que era muy curiosa, buscó información sobre cómo funcionan los relojes. Con paciencia y una lupa, descubrió que un pequeño resorte estaba suelto. Juntos lo repararon en el taller de un relojero del mercado. Cuando el reloj volvió a sonar, el abuelo comprendió que su nieta tenía el mismo ingenio que su bisabuelo.",p:["¿De quién heredó el abuelo el reloj?|De su padre|De un amigo|Lo compró","¿Qué problema tenía el reloj?|Un resorte suelto|El vidrio roto|Le faltaba pila","¿Qué comprendió el abuelo?|Que su nieta tenía ingenio|Que el reloj no servía|Que debía venderlo"]},
-{n:4,t:"El río que recuperó su voz",em:"🏞️🦢",x:"El río La Leche bajaba cantando entre algarrobos y campos de cultivo. Con los años, algunas personas empezaron a botar basura en sus orillas. El agua se volvió turbia y los peces desaparecieron. Una maestra de Íllimo organizó a sus alumnos para limpiar el río cada sábado. Pronto se sumaron padres, vecinos y autoridades. Meses después, las garzas volvieron, y los niños dijeron que el río había recuperado su voz.",p:["¿Por qué se ensució el río?|Botaban basura en sus orillas|Por un terremoto|Porque llovió","¿Quién organizó la limpieza?|Una maestra|Un alcalde|Un pescador","¿Qué significa que el río recuperó su voz?|Que volvió a estar sano y con vida|Que habló de verdad|Que se secó"]},
-{n:4,t:"La biblioteca secreta",em:"📚🚪",x:"Martín encontró una puerta pequeña detrás de un estante de la biblioteca escolar. Al abrirla, descubrió una sala llena de libros antiguos cubiertos de polvo. Cada libro tenía una nota escrita por un estudiante de otra época. Una de ellas decía: si lees esto, cuida los libros como yo los cuidé. Martín decidió restaurar la sala con ayuda de sus compañeros. Así nació el club de lectura que hoy reúne a niños de todos los grados.",p:["¿Dónde encontró Martín la puerta?|Detrás de un estante|En el patio|En su casa","¿Qué tenía cada libro?|Una nota de un estudiante|Un mapa|Dinero","¿Qué nació gracias a Martín?|Un club de lectura|Una tienda|Un equipo de fútbol"]},
-{n:4,t:"Las dos semillas",em:"🌰🌳",x:"Dos semillas cayeron en la misma tierra. La primera pensó: crecer me da miedo, prefiero quedarme quieta y segura. La segunda dijo: aunque sea difícil, quiero conocer el sol. La segunda empujó sus raíces hacia abajo y su tallo hacia arriba, hasta convertirse en un árbol. La primera se quedó quieta, y una gallina que buscaba comida se la llevó. Quien no se atreve a crecer nunca descubre lo que puede llegar a ser.",p:["¿Qué sentía la primera semilla?|Miedo|Alegría|Hambre","¿Qué quería la segunda semilla?|Conocer el sol|Dormir|Esconderse","¿Cuál es la enseñanza?|Hay que atreverse a crecer|Es mejor no hacer nada|Las gallinas son malas"]},
-{n:4,t:"Ana y la luz del sol",em:"☀️💡",x:"En el caserío de Ana no llegaba la electricidad. Por las noches, ella hacía sus tareas con una vela. En la escuela aprendió que la luz del sol puede convertirse en energía. Con ayuda de su profesor de ciencia, armó una pequeña lámpara con un panel solar reciclado. Su proyecto ganó la feria regional de ciencias. Hoy, varias familias del caserío iluminan sus casas gracias a la idea de Ana.",p:["¿Con qué hacía Ana sus tareas?|Con una vela|Con una linterna|Con la televisión","¿Qué armó Ana?|Una lámpara con panel solar|Un robot|Una radio","¿Qué pasó gracias a su idea?|Varias familias iluminan sus casas|Nadie la usó|Se mudó a la ciudad"]},
-{n:4,t:"El zorro y el cuervo",em:"🦊🧀",x:"Un cuervo tenía un trozo de queso en el pico. Un zorro quería el queso y empezó a halagarlo: ¡qué plumas tan hermosas tienes, seguro tu voz es la más bella del bosque! El cuervo, orgulloso, abrió el pico para cantar. El queso cayó y el zorro lo atrapó. Antes de irse, el zorro dijo: aprende a desconfiar de quien te adula.",p:["¿Qué tenía el cuervo en el pico?|Un trozo de queso|Una fruta|Un gusano","¿Cómo lo engañó el zorro?|Halagándolo|Asustándolo|Pagándole","¿Cuál es la enseñanza?|Desconfiar de quien te adula|Cantar siempre|Compartir el queso"]},
-{n:4,t:"El partido bajo la lluvia",em:"⚽🌧️",x:"Faltaban diez minutos para que terminara la final del campeonato escolar. Empezó a llover y la cancha se llenó de barro. El equipo de Sebastián perdía uno a cero. En una jugada, Sebastián pudo patear al arco, pero vio a su compañero Iván mejor ubicado y le pasó el balón. Iván anotó el gol del empate. Aunque al final perdieron por penales, el entrenador dijo que esa jugada mostró el verdadero espíritu de equipo.",p:["¿Cómo estaba la cancha?|Llena de barro|Seca|Con nieve","¿Qué hizo Sebastián?|Le pasó el balón a Iván|Pateó al arco|Se cayó","¿Qué valoró el entrenador?|El espíritu de equipo|Ganar a toda costa|Patear fuerte"]},
-{n:4,t:"La carta para el futuro",em:"✉️⏳",x:"La profesora pidió a sus alumnos escribir una carta para leerla dentro de diez años. Gabriela escribió sobre sus miedos: hablar en público y las matemáticas. También escribió sus sueños: ser veterinaria y viajar por la Amazonía. Guardaron todas las cartas en una caja que enterraron en el patio. Gabriela pensó que, al leerla, descubriría cuánto había cambiado. Al día siguiente, decidió empezar a vencer uno de sus miedos levantando la mano en clase.",p:["¿Cuándo leerán las cartas?|Dentro de diez años|En un mes|En cien años","¿Qué quiere ser Gabriela?|Veterinaria|Piloto|Cantante","¿Qué decidió hacer Gabriela?|Vencer uno de sus miedos|Romper la carta|Cambiarse de escuela"]},
-{n:4,t:"El guardián del bosque seco",em:"🌳🚲",x:"En el Bosque de Pómac hay algarrobos que tienen cientos de años. Don Felipe es guardaparques y recorre el bosque cada día en su bicicleta. Un día encontró a unas personas cortando árboles sin permiso. En lugar de enfrentarlas solo, tomó fotos y avisó a las autoridades. Gracias a su aviso, se protegió una zona donde viven aves que están en peligro. Don Felipe suele decir que cuidar el bosque es cuidar el aire que respiramos.",p:["¿Dónde trabaja don Felipe?|En el Bosque de Pómac|En la selva central|En una oficina","¿Qué hizo al ver que cortaban árboles?|Tomó fotos y avisó a las autoridades|Se peleó con ellos|Se fue a su casa","¿Qué dice don Felipe?|Cuidar el bosque es cuidar el aire|Los árboles no sirven|El bosque es peligroso"]}
+/* =====================================================
+   CONTENIDO: 50 CUENTOS CORTOS
+===================================================== */
+const CUENTOS = [
+{e:"🐱",t:"El gato Michi",p:["Michi es un gato gris.","Le gusta dormir al sol.","Un día vio un ratón.","Michi corrió, pero el ratón se escondió."]},
+{e:"🐶",t:"Toby y su pelota",p:["Toby es un perro feliz.","Su pelota es roja.","Un día la pelota cayó al río.","Su amigo el pato se la devolvió."]},
+{e:"🌻",t:"La semilla",p:["Ana sembró una semilla.","Cada día le daba agua.","Pronto salió una plantita.","Al final creció un girasol amarillo."]},
+{e:"🐢",t:"La tortuga Tita",p:["Tita era una tortuga muy lenta.","Quería llegar al lago.","Caminó todo el día sin rendirse.","Al atardecer llegó y se bañó feliz."]},
+{e:"🐦",t:"El pajarito",p:["Un pajarito se cayó del nido.","Pedro lo encontró en el suelo.","Con cuidado lo subió al árbol.","Su mamá cantó de alegría."]},
+{e:"🍎",t:"La manzana roja",p:["En el árbol había una manzana roja.","Lucía no podía alcanzarla.","Su hermano la cargó en sus hombros.","Juntos compartieron la manzana."]},
+{e:"🐰",t:"El conejo dormilón",p:["Coco era un conejo dormilón.","Siempre llegaba tarde a la escuela.","Un día puso su reloj despertador.","Desde entonces llega temprano."]},
+{e:"🌧️",t:"La nube triste",p:["Había una nube gris y triste.","Nadie quería jugar con ella.","Un día dejó caer su lluvia.","Las flores del campo le dieron las gracias."]},
+{e:"🐜",t:"Las hormigas trabajadoras",p:["Las hormigas trabajan todo el verano.","Guardan comida en su casa.","Cuando llega el frío no tienen hambre.","Trabajar en equipo es muy importante."]},
+{e:"🎈",t:"El globo azul",p:["Mateo tenía un globo azul.","El viento se lo llevó muy lejos.","Mateo se puso triste.","Su abuelo le regaló otro globo."]},
+{e:"🐸",t:"La rana saltarina",p:["Rita es una rana verde.","Le encanta saltar de hoja en hoja.","Un día saltó muy alto.","Desde arriba vio todo el estanque."]},
+{e:"🦆",t:"El patito valiente",p:["Un patito tenía miedo al agua.","Sus hermanos nadaban felices.","Su mamá nadó a su lado.","El patito nadó y se divirtió mucho."]},
+{e:"🌙",t:"La luna y el niño",p:["Cada noche Leo miraba la luna.","Le contaba cómo fue su día.","La luna parecía sonreír.","Así Leo se dormía tranquilo."]},
+{e:"🐝",t:"La abejita Lila",p:["Lila es una abeja pequeña.","Vuela de flor en flor.","Recoge polen para hacer miel.","Su colmena siempre está dulce."]},
+{e:"🚂",t:"El tren de juguete",p:["Sofía tiene un tren de juguete.","Sus vagones son de colores.","Lleva a sus muñecas de paseo.","El tren recorre toda la casa."]},
+{e:"🐄",t:"La vaca Rosita",p:["Rosita vive en una granja.","Come pasto fresco todo el día.","Da leche para los niños.","Todos en la granja la quieren mucho."]},
+{e:"⭐",t:"La estrella pequeña",p:["Una estrella pequeña brillaba poco.","Las otras estrellas eran grandes.","Una noche un niño perdido la vio.","Gracias a ella encontró el camino a casa."]},
+{e:"🦊",t:"El zorro y las uvas",p:["Un zorro vio unas uvas en lo alto.","Saltó y saltó, pero no las alcanzó.","Cansado, dijo que estaban verdes.","Y se fue sin las uvas."]},
+{e:"🐭",t:"El ratón y el león",p:["Un ratón despertó a un león.","El león lo dejó ir.","Días después el león cayó en una red.","El ratón mordió la red y lo salvó."]},
+{e:"🌈",t:"El arcoíris",p:["Después de la lluvia salió el sol.","En el cielo apareció un arcoíris.","Juan contó sus colores.","Eran siete colores muy bonitos."]},
+{e:"🐧",t:"El pingüino Pipo",p:["Pipo vive donde hace mucho frío.","No puede volar, pero nada muy rápido.","Atrapa peces en el mar.","Luego descansa con su familia."]},
+{e:"🎂",t:"El cumpleaños de Nico",p:["Hoy es el cumpleaños de Nico.","Su mamá hizo una torta de chocolate.","Sus amigos le cantaron.","Nico sopló las velas y pidió un deseo."]},
+{e:"🫏",t:"El burrito trabajador",p:["Un burrito llevaba leña al pueblo.","El camino era largo y difícil.","Nunca se quejaba.","Al llegar, los niños le dieron zanahorias."]},
+{e:"🏖️",t:"Un día en la playa",p:["La familia fue a la playa.","Los niños hicieron un castillo de arena.","Una ola grande lo derribó.","Todos rieron y construyeron otro."]},
+{e:"🦉",t:"El búho sabio",p:["En el bosque vivía un búho sabio.","Los animales le pedían consejos.","Él siempre escuchaba con paciencia.","Por eso todos lo respetaban."]},
+{e:"🐛",t:"La oruga",p:["Una oruga comía muchas hojas.","Luego hizo un capullo y durmió.","Pasaron varios días.","Al despertar era una mariposa de colores."]},
+{e:"🍞",t:"El pan de la abuela",p:["La abuela amasa el pan temprano.","Lo pone en el horno de barro.","La casa huele muy rico.","Los nietos esperan el pan caliente."]},
+{e:"🐕",t:"El perro guardián",p:["Bruno cuida la casa de noche.","Una vez escuchó un ruido extraño.","Ladró muy fuerte.","Era solo un gato que buscaba comida."]},
+{e:"🌳",t:"El árbol amigo",p:["En el parque había un árbol viejo.","Daba sombra a los niños.","Los pájaros hacían nidos en sus ramas.","Todos cuidaban al árbol amigo."]},
+{e:"🐠",t:"El pez dorado",p:["Un pez dorado vivía en una pecera.","Soñaba con conocer un lugar grande.","Un niño lo llevó a un estanque.","Allí hizo muchos amigos nuevos."]},
+{e:"⚽",t:"El partido de fútbol",p:["Los niños jugaban un partido.","Luis estaba nervioso.","Pateó la pelota con fuerza.","Fue gol y todos lo abrazaron."]},
+{e:"🐑",t:"La ovejita perdida",p:["Una ovejita se alejó del rebaño.","Empezó a oscurecer.","El pastor la buscó con su linterna.","La encontró y la llevó a casa."]},
+{e:"🎨",t:"Los colores de Ema",p:["Ema mezcló azul y amarillo.","Apareció el color verde.","Luego mezcló rojo y blanco.","Así nació el color rosado."]},
+{e:"🐒",t:"El mono travieso",p:["Un mono travieso escondía las frutas.","Los demás animales se enojaron.","El mono pidió perdón.","Desde entonces comparte sus frutas."]},
+{e:"🚲",t:"La bicicleta nueva",p:["Daniel recibió una bicicleta.","Al principio se caía mucho.","Su papá lo ayudó a practicar.","Pronto aprendió a andar solo."]},
+{e:"🐔",t:"La gallina Pinta",p:["La gallina Pinta encontró un grano de trigo.","Pidió ayuda para sembrarlo.","Nadie quiso ayudar.","Al final ella sola hizo el pan."]},
+{e:"🌊",t:"El pescador",p:["Don Pedro sale al mar muy temprano.","Usa su caballito de totora.","Pesca peces para su familia.","Sus hijos lo esperan en la orilla."]},
+{e:"🦒",t:"La jirafa Jacinta",p:["Jacinta es una jirafa muy alta.","Come las hojas de los árboles altos.","A veces ayuda a otros animales.","Les baja las frutas que no alcanzan."]},
+{e:"🐞",t:"La mariquita",p:["Una mariquita tenía puntos negros.","Se posó en la mano de Clara.","Clara contó sus puntos.","Luego la mariquita voló al jardín."]},
+{e:"🎁",t:"El regalo",p:["Tomás no tenía dinero para un regalo.","Hizo una tarjeta para su mamá.","Le escribió que la quería mucho.","Su mamá dijo que era el mejor regalo."]},
+{e:"🐊",t:"El cocodrilo y el pajarito",p:["Un cocodrilo tenía dolor de muelas.","Nadie se atrevía a ayudarlo.","Un pajarito valiente le limpió los dientes.","El cocodrilo sonrió agradecido."]},
+{e:"☀️",t:"El sol y el viento",p:["El sol y el viento discutían.","Querían saber quién era más fuerte.","El viento sopló y el hombre cerró su abrigo.","El sol brilló y el hombre se lo quitó."]},
+{e:"🐘",t:"El elefante Bongo",p:["Bongo es un elefante grande.","Usa su trompa para beber agua.","También se baña en el río.","Moja a sus amigos para jugar."]},
+{e:"🍉",t:"La sandía",p:["En verano hace mucho calor.","Mamá cortó una sandía grande.","Era roja y muy jugosa.","Todos comieron felices en el patio."]},
+{e:"🦜",t:"El loro Paco",p:["Paco es un loro verde.","Repite todo lo que escucha.","Un día dijo buenos días.","Toda la familia se rió con él."]},
+{e:"🐇",t:"La liebre y la tortuga",p:["La liebre se burlaba de la tortuga.","Hicieron una carrera.","La liebre se durmió en el camino.","La tortuga siguió y ganó la carrera."]},
+{e:"🏡",t:"La casita nueva",p:["La familia de Rosa se mudó.","La casa nueva estaba vacía.","Pintaron las paredes de colores.","Pronto se sintió como su hogar."]},
+{e:"🐺",t:"El niño y el lobo",p:["Un niño cuidaba ovejas.","Gritaba que venía el lobo, pero era mentira.","Un día el lobo llegó de verdad.","Nadie le creyó porque había mentido."]},
+{e:"📚",t:"El libro mágico",p:["Valeria encontró un libro viejo.","Al abrirlo, las letras brillaron.","Cada página la llevaba a un lugar nuevo.","Desde ese día Valeria ama leer."]},
+{e:"🌟",t:"El niño que aprendió a leer",p:["Al principio a Miguel le costaba leer.","Practicaba un poquito cada día.","Su maestra lo animaba siempre.","Ahora Miguel lee cuentos a su hermanita."]}
 ];
 
-/* ===== ESTADO ===== */
-const almacen={leer(k,d){try{const v=localStorage.getItem("lectolandia2_"+k);return v?JSON.parse(v):d}catch(e){return d}},
-               guardar(k,v){try{localStorage.setItem("lectolandia2_"+k,JSON.stringify(v))}catch(e){}}};
-let estrellas=almacen.leer("estrellas",0);
-let orLeidas=new Set(almacen.leer("orLeidas",[]));
-let cuentosHechos=new Set(almacen.leer("cuentosHechos",[]));
-let vozActiva=true;
-const $=s=>document.querySelector(s);
-const azar=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b};
-function sumarEstrella(){estrellas++;$("#estrellas").textContent=estrellas;almacen.guardar("estrellas",estrellas)}
-$("#estrellas").textContent=estrellas;
+/* =====================================================
+   ESTADO Y ALMACENAMIENTO
+===================================================== */
+const KEY = "lectolandia_v1";
+let S = { name:"", o:{}, c:{} };
+function load(){ try{ const d = JSON.parse(localStorage.getItem(KEY)); if(d) S = Object.assign(S,d); }catch(e){} }
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+load();
 
-/* ===== VOZ ===== */
-let vozES=null;const enCurso=[];let latido=null;
-function elegirVoz(){const vs=speechSynthesis.getVoices().filter(v=>/^es/i.test(v.lang));
-  const pref=["es-PE","es-MX","es-US","es-419","es-CO","es-AR","es-ES"];vozES=null;
-  for(const p of pref){const v=vs.find(v=>v.lang.replace("_","-")===p&&/google|natural|online/i.test(v.name))||vs.find(v=>v.lang.replace("_","-")===p);if(v){vozES=v;break}}
-  if(!vozES)vozES=vs[0]||null}
-if("speechSynthesis" in window){elegirVoz();speechSynthesis.onvoiceschanged=elegirVoz}
-function hablar(texto,{vel=.85,alTerminar}={}){
-  if(!vozActiva||!("speechSynthesis" in window)){alTerminar&&setTimeout(alTerminar,300);return}
-  speechSynthesis.cancel();clearInterval(latido);
-  const u=new SpeechSynthesisUtterance(texto);u.lang=vozES?vozES.lang:"es-ES";if(vozES)u.voice=vozES;u.rate=vel;u.pitch=1.1;
-  enCurso.push(u);if(enCurso.length>8)enCurso.shift();
-  u.onend=()=>{clearInterval(latido);alTerminar&&alTerminar()};u.onerror=()=>clearInterval(latido);
-  setTimeout(()=>{speechSynthesis.speak(u);latido=setInterval(()=>{if(!speechSynthesis.speaking){clearInterval(latido);return}speechSynthesis.pause();speechSynthesis.resume()},9000)},120)}
-function callar(){try{speechSynthesis.cancel()}catch(e){}if(typeof recActual!=="undefined"&&recActual){recActual._cancel=true;try{recActual.abort()}catch(e){}recActual=null}}
-$("#btnVoz").onclick=e=>{vozActiva=!vozActiva;e.currentTarget.textContent=vozActiva?"🔊":"🔇";e.currentTarget.setAttribute("aria-pressed",vozActiva);if(!vozActiva)callar()};
+const $ = id => document.getElementById(id);
+const starsTxt = n => "⭐".repeat(n) + "☆".repeat(3-n);
+const totalStars = () => Object.values(S.o).reduce((a,b)=>a+b,0) + Object.values(S.c).reduce((a,b)=>a+b,0);
+const nameOr = (alt="") => S.name ? S.name : alt;
 
-/* ===== NOMBRE DEL NIÑO ===== */
-let nombre=almacen.leer("nombre","");
-const tuNombre=(pre=", ")=>nombre?pre+nombre:"";
-function pintarNombre(){$("#nombreChip").textContent=nombre||"Lector"}
-function pedirNombre(){$("#campoNombre").value=nombre;ir("nombre");setTimeout(()=>$("#campoNombre").focus(),100)}
-$("#formNombre").addEventListener("submit",e=>{e.preventDefault();pedirAlInicio();nombre=$("#campoNombre").value.trim().replace(/\s+/g," ");
-  nombre=nombre?nombre.charAt(0).toUpperCase()+nombre.slice(1):"";almacen.guardar("nombre",nombre);almacen.guardar("visto",true);pintarNombre();ir("inicio");
-  hablar(nombre?`¡Hola, ${nombre}! Vamos a leer juntos.`:"¡Hola! Vamos a leer juntos.")});
-$("#saltarNombre").onclick=()=>{pedirAlInicio();almacen.guardar("visto",true);ir("inicio");hablar("¡Hola! Vamos a leer juntos.")};
-$("#chipNombre").onclick=pedirNombre;
-pintarNombre();
+let mode = "o", idx = 0, part = 0, partScores = [], curLevel = 0;
 
-/* ===== LECTURA EN VOZ ALTA (micrófono) ===== */
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-let micBloqueado=false,recActual=null;
-const NUM={"0":"cero","1":"uno","2":"dos","3":"tres","4":"cuatro","5":"cinco","6":"seis","7":"siete","8":"ocho","9":"nueve","10":"diez","11":"once","12":"doce","20":"veinte","100":"cien"};
-const norm=w=>w.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9ñ]/g,"");
-const tokens=t=>t.split(/\s+/).map(norm).filter(Boolean).map(w=>NUM[w]||w);
-function lev(a,b){const d=[...Array(b.length+1).keys()];for(let i=1;i<=a.length;i++){let p=d[0];d[0]=i;for(let j=1;j<=b.length;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t}}return d[b.length]}
-const parecida=(a,b)=>a===b||(a.length>3&&lev(a,b)<=(a.length>6?2:1));
-/* Devuelve qué palabras de la oración se leyeron bien */
-function comparar(objetivo,oidos){const meta=tokens(objetivo),oi=tokens(oidos.join(" "));let p=0;
-  const ok=meta.map(w=>{for(let k=p;k<Math.min(oi.length,p+4);k++){if(parecida(w,oi[k])){p=k+1;return true}}
-    if(oi.some(x=>parecida(w,x)))return true;return false});
-  return {ok,pct:meta.length?ok.filter(Boolean).length/meta.length:0}}
-/* ===== MICRÓFONO EN LAPTOP, CELULAR Y TABLET ===== */
-const UA=navigator.userAgent;
-const ES_IOS=/iPad|iPhone|iPod/.test(UA)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
-const ES_ANDROID=/Android/i.test(UA);
-const MOVIL=ES_IOS||ES_ANDROID||/Mobi|Tablet|Silk|Kindle/i.test(UA);
-const EN_IFRAME=(()=>{try{return window.self!==window.top}catch(e){return true}})();
-const IDIOMAS_REC=ES_IOS?["es-MX","es-ES","es-US"]:["es-PE","es-419","es-MX","es-ES"];
-let idiomaRec=almacen.leer("idiomaRec",IDIOMAS_REC[0]);if(!IDIOMAS_REC.includes(idiomaRec))idiomaRec=IDIOMAS_REC[0];
-function siguienteIdioma(){const i=IDIOMAS_REC.indexOf(idiomaRec);if(i<IDIOMAS_REC.length-1){idiomaRec=IDIOMAS_REC[i+1];almacen.guardar("idiomaRec",idiomaRec);return true}return false}
-let micPermitido=false,sinMicro=false;
-function politicaPermite(){try{const p=document.permissionsPolicy||document.featurePolicy;if(p&&p.allowsFeature)return p.allowsFeature("microphone")}catch(e){}return true}
-function instrucDispositivo(){
-  if(ES_IOS)return "En iPhone o iPad: abre Ajustes › Safari › Micrófono › «Permitir». También en Ajustes › Privacidad y seguridad › Reconocimiento de voz, activa Safari. Luego recarga la página.";
-  if(ES_ANDROID)return "En Android: toca el candado 🔒 (o los ajustes ⚙️) junto a la dirección › Permisos › Micrófono › «Permitir». Si no aparece, ve a Ajustes del teléfono › Aplicaciones › Chrome › Permisos › Micrófono. Luego recarga.";
-  return "En la laptop: haz clic en el candado 🔒 junto a la dirección › Micrófono › «Permitir» y recarga. En Windows revisa también Configuración › Privacidad › Micrófono (activado para el navegador).";}
-function avisoMic(){
-  if(!SR)return ES_IOS?"En iPhone o iPad abre Lectolandia en Safari (actualizado) para poder leer con el micrófono."
-                      :"Este navegador no puede escuchar tu voz. Abre Lectolandia en Google Chrome o Microsoft Edge.";
-  if(EN_IFRAME&&!politicaPermite())return "Lectolandia está dentro de otra página que no deja usar el micrófono. Toca «Abrir en ventana nueva».";
-  if(!window.isSecureContext&&location.protocol!=="file:")return "El micrófono solo funciona en páginas seguras (que empiezan con https://). Publica Lectolandia en GitHub Pages, Netlify o Tiiny.host.";
-  if(sinMicro)return "No encontramos un micrófono. Conecta uno (o unos audífonos con micrófono) y toca «Probar otra vez».";
-  if(micBloqueado)return "El micrófono está bloqueado. "+instrucDispositivo();
-  return ""}
-const puedeAbrirAparte=()=>EN_IFRAME&&/^(https?|file):$/.test(location.protocol);
-function botonesMic(){return `<div class="acciones"><button type="button" data-mic="probar">🎤 Probar otra vez</button>${puedeAbrirAparte()?`<button type="button" data-mic="abrir">↗️ Abrir en ventana nueva</button>`:""}</div>`}
-function htmlAvisoMic(){return ""}
-function pintarChipMic(){const c=$("#chipMic");if(!c)return;c.classList.toggle("mic-ok",micPermitido&&!avisoMic());c.classList.toggle("mic-no",!!avisoMic());
-  c.textContent=micPermitido&&!avisoMic()?"🎤✅":avisoMic()?"🎤⛔":"🎤";
-  const e=$("#estadoMicBienvenida");if(e)e.textContent=micPermitido&&!avisoMic()?"✅ Micrófono activado. ¡Ya puedes leer en voz alta!":avisoMic()||"Para leer en voz alta, toca el botón y elige «Permitir»."}
-/* Pide permiso (debe llamarse al tocar un botón). En iPhone/iPad el permiso lo pide el propio reconocimiento de voz. */
-/* Pide el permiso con el propio reconocimiento de voz (no con getUserMedia),
-   para que Chrome muestre solo las 3 opciones, sin la barra de nivel ni la lista de micrófonos. */
-function pedirMicrofono(){return new Promise(res=>{
-  if(!SR){res(false);return}
-  if(ES_IOS){micBloqueado=false;pintarChipMic();res(true);return}
-  let r,listo=false;const fin=ok=>{if(listo)return;listo=true;try{r.abort()}catch(e){}pintarChipMic();res(ok)};
-  try{r=new SR();r.lang=idiomaRec;r.continuous=false;r.interimResults=false}catch(e){res(false);return}
-  r.onaudiostart=r.onstart=()=>{micPermitido=true;micBloqueado=false;sinMicro=false;fin(true)};
-  r.onerror=ev=>{if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){micBloqueado=true;micPermitido=false;fin(false)}
-    else if(ev.error==="audio-capture"){sinMicro=true;fin(false)}else if(ev.error!=="aborted")fin(micPermitido)};
-  r.onend=()=>fin(micPermitido);
-  try{r.start()}catch(e){fin(false)}})}
-function mostrarMic(ok){if(ok)return;const m=avisoMic()||"No se pudo activar el micrófono.";document.querySelectorAll("#escucheOr,#escucheC").forEach(e=>e.textContent="🎤 "+m)}
-/* Ejecuta fn con el micrófono listo; si hace falta, primero pide permiso */
-function conMicro(fn){const m=avisoMic();
-  if(m&&!micBloqueado&&!sinMicro){mostrarMic(false);return}
-  if(micPermitido||ES_IOS){fn();return}
-  pedirMicrofono().then(ok=>{if(ok)fn();else mostrarMic(false)})}
-/* Al primer toque del niño se muestra directamente el permiso del navegador */
-function pedirAlInicio(){if(SR&&!ES_IOS&&!micPermitido&&!micBloqueado&&!avisoMic())pedirMicrofono()}
-if(navigator.permissions&&navigator.permissions.query){
-  navigator.permissions.query({name:"microphone"}).then(st=>{const f=()=>{micPermitido=st.state==="granted";if(st.state==="denied")micBloqueado=true;if(st.state==="granted")micBloqueado=false;pintarChipMic()};f();st.onchange=f}).catch(()=>{})}
-pintarChipMic();
-/* Escucha al niño. Llama alTerminar(textos) con las alternativas reconocidas. */
-function escuchar({alOir,alTerminar,alError}){
-  if(!SR||micBloqueado){alError&&alError(avisoMic());return null}
-  callar();
-  const r=new SR();r.lang=idiomaRec;r.interimResults=true;r.continuous=!MOVIL;r.maxAlternatives=3;recActual=r;r.onstart=()=>{micPermitido=true;pintarChipMic()};
-  let finales=[],alts=[],silencio=null,termino=false;
-  const cerrar=()=>{clearTimeout(silencio);try{r.stop()}catch(e){}};
-  const programar=t=>{clearTimeout(silencio);silencio=setTimeout(cerrar,t)};
-  r.onresult=e=>{let parcial="";alts=[];
-    for(let i=0;i<e.results.length;i++){const res=e.results[i];parcial+=res[0].transcript+" ";
-      if(res.isFinal)for(let a=0;a<res.length;a++)alts.push(res[a].transcript)}
-    finales=[parcial.trim(),...alts];alOir&&alOir(parcial.trim());programar(1800)};
-  r.onerror=ev=>{if(r._cancel)return;
-    if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){micBloqueado=true;micPermitido=false;pintarChipMic();termino=true;alError&&alError(avisoMic())}
-    else if(ev.error==="audio-capture"){sinMicro=true;pintarChipMic();termino=true;alError&&alError(avisoMic())}
-    else if(ev.error==="language-not-supported"){siguienteIdioma();termino=true;alError&&alError("Ajusté el idioma. Toca el micrófono otra vez.")}
-    else if(ev.error==="network"){termino=true;alError&&alError("Se necesita internet para escuchar tu voz.")}
-    else if(ev.error==="no-speech"){termino=true;alError&&alError("No te escuché. Toca el micrófono y lee en voz alta.")}};
-  r.onend=()=>{clearTimeout(silencio);if(recActual===r)recActual=null;if(r._cancel)return;if(!termino){termino=true;alTerminar&&alTerminar(finales.filter(Boolean))}};
-  try{r.start();programar(8000)}catch(e){alError&&alError(avisoMic())}
-  return {parar:cerrar}}
-/* Pinta cada palabra en verde (bien leída) o rojo (por practicar) */
-function marcarPalabras(cont,ok){const bs=[...cont.querySelectorAll("button")];bs.forEach((b,i)=>{b.classList.remove("w-ok","w-mal");if(i<ok.length)b.classList.add(ok[i]?"w-ok":"w-mal")})}
-function mejorResultado(objetivo,textos){let mejor={ok:[],pct:0};textos.forEach(t=>{const r=comparar(objetivo,[t]);if(r.pct>mejor.pct)mejor=r});
-  if(textos.length>1){const r=comparar(objetivo,textos);if(r.pct>mejor.pct)mejor=r}return mejor}
-const palabrasFalladas=(cont,ok)=>[...cont.querySelectorAll("button")].filter((b,i)=>ok[i]===false).map(b=>b.dataset.w);
+/* =====================================================
+   NAVEGACIÓN
+===================================================== */
+function show(id){
+  stopAll();
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  $(id).classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+  updateBadges();
+}
+document.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>{ if(b.dataset.back==="sMenu") renderMenu(); show(b.dataset.back); });
 
-let actx=null;
-function tono(ok){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();const n=ok?[660,880,1100]:[300,220];
-  n.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type="triangle";o.frequency.value=f;g.gain.setValueAtTime(.18,actx.currentTime+i*.1);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+i*.1+.25);o.connect(g).connect(actx.destination);o.start(actx.currentTime+i*.1);o.stop(actx.currentTime+i*.1+.3)})}catch(e){}}
-const FELICITA=["¡Muy bien!","¡Excelente!","¡Genial!","¡Lo lograste!","¡Súper!"];
-function celebrar(){tono(true);const g=document.createElement("div");g.className="globo";g.textContent=FELICITA[Math.floor(Math.random()*FELICITA.length)];document.body.appendChild(g);setTimeout(()=>g.remove(),950);
-  for(let i=0;i<26;i++){const c=document.createElement("i");c.className="confeti";c.style.left=Math.random()*100+"vw";c.style.background=COLORES[i%6][0];c.style.animationDelay=Math.random()*.4+"s";document.body.appendChild(c);setTimeout(()=>c.remove(),2200)}}
-
-/* ===== NAVEGACIÓN ===== */
-function ir(id){if(window._terminarLeo)window._terminarLeo();document.querySelectorAll(".pantalla").forEach(p=>p.hidden=p.id!==id);callar();window.scrollTo({top:0});
-  if(id==="inicio")pintarInicio();
-  if(id==="oraciones"){$("#juegoOraciones").hidden=true;$("#menuOraciones").hidden=false;pintarMenuOraciones()}
-  if(id==="cuentos"){$("#lector").hidden=true;$("#listaCuentos").hidden=false;pintarPortadas()}}
-document.querySelectorAll("[data-volver]").forEach(b=>b.onclick=()=>ir("inicio"));
-function pintarInicio(){$(".saludo").textContent=nombre?`¡Hola, ${nombre}! ¿Qué quieres leer hoy?`:"¡Hola! ¿Qué quieres leer hoy?";
-  const m=[{id:"oraciones",em:"🚂",t:"Oraciones",d:"Lee y elige el dibujo correcto",edad:"5-12 años",c:3,hecho:orLeidas.size,total:ORACIONES.length,u:"oraciones leídas"},
-           {id:"cuentos",em:"🌳",t:"Cuentos",d:"Lee historias y responde preguntas",edad:"5-12 años",c:4,hecho:cuentosHechos.size,total:CUENTOS.length,u:"cuentos leídos"}];
-  $("#mundos").innerHTML=m.map(w=>`<button class="mundo" data-ir="${w.id}" style="--c:${COLORES[w.c][0]};--c2:${COLORES[w.c][1]}">
-    <span class="edad">${w.edad}</span><div><div class="em">${w.em}</div><h3>${w.t}</h3><p>${w.d}</p></div>
-    <div><div class="progreso"><i style="width:${Math.round(w.hecho/w.total*100)}%"></i></div><div class="cifra">${w.hecho} de ${w.total} ${w.u}</div></div></button>`).join("");
-  document.querySelectorAll("[data-ir]").forEach(b=>b.onclick=()=>{pedirAlInicio();ir(b.dataset.ir);hablar(b.dataset.ir==="oraciones"?"Tren de oraciones":"Bosque de cuentos")})}
-
-/* ===== ORACIONES ===== */
-const palabrasTocables=txt=>txt.split(" ").map(w=>`<button data-w="${w.replace(/[.,¡!¿?;:]/g,"")}">${w}</button>`).join(" ");
-function pintarMenuOraciones(){
-  $("#niveles").innerHTML=NIVELES_OR.map((n,i)=>`<button class="nivel" data-n="${i}" style="--c:${COLORES[n.c][0]};--c2:${COLORES[n.c][1]}"><b>${n.t}</b><span>${n.d}</span></button>`).join("");
-  $("#niveles").onclick=e=>{const b=e.target.closest(".nivel");if(!b)return;const n=NIVELES_OR[+b.dataset.n];
-    const rango=[...Array(n.a-n.de).keys()].map(k=>k+n.de);
-    const pendientes=azar(rango.filter(i=>!orLeidas.has(i))),hechas=azar(rango.filter(i=>orLeidas.has(i)));
-    jugarOraciones((n.t==="Sorpresa"?azar(rango):[...pendientes,...hechas]).slice(0,10),n.t)};
-  $("#cuentaOr").textContent=`· ${orLeidas.size} leídas`;
-  $("#numeros").innerHTML=ORACIONES.map((_,i)=>`<button class="num ${orLeidas.has(i)?"leida":""}" data-i="${i}" aria-label="Oración ${i+1}">${i+1}</button>`).join("");
-  $("#numeros").onclick=e=>{const b=e.target.closest(".num");if(!b)return;const i=+b.dataset.i;jugarOraciones([...Array(Math.min(10,ORACIONES.length-i)).keys()].map(k=>k+i),"Desde la "+(i+1))}}
-function nivelDe(i){return i<40?"Fácil":i<75?"Medio":"Difícil"}
-function jugarOraciones(lista,nombre){
-  $("#menuOraciones").hidden=true;const panel=$("#juegoOraciones");panel.hidden=false;window.scrollTo({top:0});
-  let n=0,aciertos=0,marcas=[];
-  function ronda(){
-    if(n>=lista.length){panel.innerHTML=`<div class="fin"><div class="trofeo">${aciertos>=lista.length*.8?"🏆":aciertos>=lista.length*.5?"🥈":"🌟"}</div><h3>¡Terminaste${tuNombre()}!</h3>
-      <p class="ayuda">Acertaste ${aciertos} de ${lista.length} a la primera. Llevas ${orLeidas.size} de 100 oraciones leídas.</p>
-      <button class="grande-btn" id="otraVez">Leer 10 más</button><button class="grande-btn alt" id="aMenu">Ver niveles</button></div>`;
-      hablar(`¡Eres un gran lector${tuNombre()}! Acertaste ${aciertos} de ${lista.length}.`);
-      $("#otraVez").onclick=()=>{const pend=azar([...Array(100).keys()].filter(i=>!orLeidas.has(i)));jugarOraciones((pend.length?pend:azar([...Array(100).keys()])).slice(0,10),"Más")};
-      $("#aMenu").onclick=()=>ir("oraciones");return}
-    const idx=lista[n];const [frase,ok,...malas]=ORACIONES[idx];const ops=azar([ok,...malas]);let fallo=false;
-    panel.innerHTML=`<div class="contador">${lista.map((_,i)=>`<i class="${marcas[i]||""} ${i===n?"ya":""}"></i>`).join("")}</div>
-      <span class="etiqueta">Oración ${idx+1} de 100 · ${nivelDe(idx)}</span>
-      <div class="oracion">${palabrasTocables(frase)}</div>
-      <div class="barra-lectura"><button class="mic" id="micOr">🎤 Leo en voz alta</button><button class="repetir">🔊 Escuchar</button></div>
-      <p class="escuche" id="escucheOr">${avisoMic()?"":"Toca el micrófono y lee la oración en voz alta."}</p>
-      ${htmlAvisoMic()}
-      <div class="opciones">${ops.map(o=>`<button class="op" data-o="${o}">${o}</button>`).join("")}</div>
-      <p class="ayuda" style="margin-top:18px">Primero léela en voz alta. Si no sabes una palabra, tócala. Luego elige el dibujo correcto.</p>`;
-    const orEl=panel.querySelector(".oracion");let leidaBien=false,oyente=null;
-    orEl.onclick=e=>{const b=e.target.closest("button");if(b)hablar(b.dataset.w,{vel:.75})};
-    panel.querySelector(".repetir").onclick=()=>hablar(frase,{vel:.8});
-    const micB=panel.querySelector("#micOr"),esc=panel.querySelector("#escucheOr");
-    micB.onclick=()=>{if(oyente){oyente.parar();return}conMicro(empezarOr)};
-    const empezarOr=()=>{if(oyente)return;
-      micB.classList.add("oyendo");micB.textContent="👂 Te escucho… (toca al terminar)";esc.textContent="Lee despacio y con voz clara.";
-      oyente=escuchar({
-        alOir:t=>{esc.innerHTML=`Escuché: <b>${t}</b>`},
-        alTerminar:textos=>{oyente=null;micB.classList.remove("oyendo");micB.textContent="🎤 Leer otra vez";
-          const r=mejorResultado(frase,textos);marcarPalabras(orEl,r.ok);
-          if(r.pct>=.8){esc.innerHTML=`<b>¡Leíste muy bien${tuNombre()}!</b> Ahora elige el dibujo.`;celebrar();if(!leidaBien){leidaBien=true;sumarEstrella()}
-            hablar(`¡Muy bien leído${tuNombre()}! Ahora elige el dibujo.`)}
-          else{const f=palabrasFalladas(orEl,r.ok);esc.innerHTML=`Casi${tuNombre()}. Practica las palabras en rojo y vuelve a intentarlo.`;tono(false);
-            hablar(`Casi${tuNombre()}. Escucha: ${f.slice(0,4).join(", ")}. Ahora inténtalo otra vez.`,{vel:.75})}},
-        alError:msg=>{oyente=null;micB.classList.remove("oyendo");micB.textContent="🎤 Leo en voz alta";esc.textContent=msg}})};
-    panel.querySelectorAll(".op").forEach(b=>b.onclick=()=>{
-      if(b.dataset.o===ok){callar();b.classList.add("bien");celebrar();if(!fallo){aciertos++;sumarEstrella()}
-        orLeidas.add(idx);almacen.guardar("orLeidas",[...orLeidas]);marcas[n]=fallo?"mal":"ok";n++;
-        panel.querySelectorAll(".op").forEach(x=>x.disabled=true);setTimeout(ronda,1400)}
-      else{fallo=true;b.classList.add("error");tono(false);hablar("Vuelve a leer con calma.");setTimeout(()=>b.classList.remove("error"),400)}})}
-  ronda()}
-
-/* ===== CUENTOS ===== */
-let filtroC=almacen.leer("filtroC",0);let tamTexto=almacen.leer("tam",1.5);
-function pintarPortadas(){
-  const fs=[[0,"Todos"],[1,"Inicial"],[2,"1.º-2.º"],[3,"3.º-4.º"],[4,"5.º-6.º"]];
-  $("#filtrosCuentos").innerHTML=fs.map(([v,t])=>`<button class="filtro" data-v="${v}" aria-pressed="${v===filtroC}">${t}</button>`).join("")+`<span class="ayuda" style="margin:0;align-self:center">${cuentosHechos.size} de ${CUENTOS.length} leídos</span>`;
-  $("#filtrosCuentos").onclick=e=>{const b=e.target.closest(".filtro");if(!b)return;filtroC=+b.dataset.v;almacen.guardar("filtroC",filtroC);pintarPortadas()};
-  $("#portadas").innerHTML=CUENTOS.map((c,i)=>({c,i})).filter(o=>!filtroC||o.c.n===filtroC).map(({c,i})=>{const col=COLORES[(c.n+(i%2))%6];
-    return `<button class="portada" data-i="${i}" style="--c:${col[0]};--c2:${col[1]}"><span class="n">Cuento ${i+1}</span><span class="em">${c.em}</span><h4>${c.t}</h4><small>${NIVELES_C[c.n]}</small><span class="hecho">${cuentosHechos.has(i)?"✅ Leído":"📖 Leer"}</span></button>`}).join("");
-  $("#portadas").onclick=e=>{const b=e.target.closest(".portada");if(b)abrirCuento(+b.dataset.i)}}
-function abrirCuento(i){
-  const c=CUENTOS[i];const frases=c.x.match(/[^.!?]+[.!?]+/g).map(s=>s.trim());
-  const preg=c.p.map(s=>{const [q,ok,...m]=s.split("|");return {q,ok,ops:azar([ok,...m])}});
-  $("#listaCuentos").hidden=true;const L=$("#lector");L.hidden=false;window.scrollTo({top:0});callar();
-  L.innerHTML=`<div class="lector-top"><button class="mini" id="cerrarCuento">← Cuentos</button><h3 class="titulo">${c.t}</h3>
-    <button class="mini" id="menos" aria-label="Letra más pequeña">A−</button><button class="mini" id="mas" aria-label="Letra más grande">A+</button>
-    <button class="mini prim" id="leerCuento">🔊 Escuchar cuento</button><button class="mini" id="leoYo" style="background:var(--rojo);color:#fff;box-shadow:0 4px 0 #d93e3e">🎤 Leo yo</button></div>
-    ${htmlAvisoMic()}
-    <div class="ilustra">${c.em}</div>
-    <p class="ayuda" style="text-align:center">Cuento ${i+1} de ${CUENTOS.length} · ${NIVELES_C[c.n]} · Toca una palabra para oírla</p>
-    <div class="texto" style="--tam:${tamTexto}rem">${frases.map((f,k)=>`<span class="frase" data-f="${k}">${palabrasTocables(f)}</span>`).join(" ")}</div>
-    <div id="panelLeoYo" class="juego leo-panel" hidden><div class="mic-vivo"><span class="punto"></span><span id="estadoMic">Micrófono encendido: lee en voz alta</span></div><p class="etiqueta" id="pasoLeo"></p><p class="animo" id="animoC"></p><p class="escuche" id="escucheC"></p><div class="barra-lectura"><button class="mini" id="seguirMic" hidden style="background:var(--rojo);color:#fff">🎤 Seguir escuchando</button><button class="mini" id="saltarFrase">Saltar frase →</button><button class="mini" id="pararLeo">⏹ Terminar lectura</button></div></div>
-    <div class="preguntas">${preg.map((p,k)=>`<div class="preg" data-p="${k}"><p>🔊 ${k+1}. ${p.q}</p><div class="ops">${p.ops.map(o=>`<button data-o="${o.replace(/"/g,"&quot;")}">${o}</button>`).join("")}</div></div>`).join("")}</div>
-    <div class="pie-cuento">${i>0?`<button class="mini" id="antC">← Anterior</button>`:"<span></span>"}${i<CUENTOS.length-1?`<button class="mini prim" id="sigC">Siguiente cuento →</button>`:""}</div>`;
-  const texto=L.querySelector(".texto");let leyendo=false;
-  function detener(){leyendo=false;callar();texto.querySelectorAll(".frase").forEach(f=>f.classList.remove("leyendo"));const b=$("#leerCuento");if(b)b.textContent="🔊 Escuchar cuento"}
-  function leerFrase(k){if(!leyendo)return;const fr=texto.querySelectorAll(".frase");fr.forEach(f=>f.classList.remove("leyendo"));
-    if(k>=frases.length){detener();return}fr[k].classList.add("leyendo");fr[k].scrollIntoView({block:"center",behavior:"smooth"});
-    hablar(frases[k],{vel:.82,alTerminar:()=>setTimeout(()=>leerFrase(k+1),350)})}
-  texto.onclick=e=>{const b=e.target.closest("button");if(b){if(leyendo)detener();if(lector)lector.hablarSinOir(b.dataset.w,.75);else hablar(b.dataset.w,{vel:.75})}};
-  $("#leerCuento").onclick=e=>{if(leyendo){detener();return}terminarLeoYo();leyendo=true;e.currentTarget.textContent="⏹ Detener";leerFrase(0)};
-  /* Modo "Leo yo": micrófono encendido UNA sola vez. Si se equivoca, repite la frase desde su primera palabra. */
-  const pLeo=$("#panelLeoYo"),escC=$("#escucheC"),animo=$("#animoC");
-  let lector=null,fraseLeo=-1,intentos=1,fallosFrase={},racha=0;
-  const palabrasDe=k=>frases[k].split(/\s+/).filter(w=>norm(w));
-  const metaDe=k=>tokens(frases[k]);
-  const propiosDe=k=>palabrasDe(k).map((w,i)=>i>0&&/^[¡¿«"]?[A-ZÁÉÍÓÚÑ]/.test(w));
-  function terminarLeoYo(){if(lector){lector.apagar();lector=null}fraseLeo=-1;pLeo.hidden=true;texto.querySelectorAll(".frase").forEach(f=>{f.classList.remove("leyendo");marcarPalabras(f,[])})}
-  function animar(msg,color){animo.textContent=msg;animo.style.color=color||"var(--verde)";animo.classList.remove("salta");void animo.offsetWidth;animo.classList.add("salta")}
-  function irFrase(k){const fr=texto.querySelectorAll(".frase");fr.forEach(f=>f.classList.remove("leyendo"));
-    if(k>=frases.length){if(lector){lector.apagar();lector=null}fraseLeo=-1;
-      const msg=intentos===1?`¡Increíble${tuNombre()}! Leíste todo el cuento sin equivocarte. ¡Eres un gran lector!`
-                            :`¡Lo lograste${tuNombre()}! Leíste todo el cuento. Repetiste ${intentos-1} ${intentos===2?"vez":"veces"} alguna frase y nunca te rendiste, ¡eso es de campeones!`;
-      $("#estadoMic").textContent="Micrófono apagado";pLeo.classList.add("apagado");$("#pasoLeo").textContent="Lectura terminada";
-      animar("🏆 ¡Campeón de la lectura!");escC.textContent=msg+" Ahora responde las preguntas.";
-      $("#saltarFrase").hidden=true;$("#pararLeo").hidden=true;celebrar();setTimeout(celebrar,700);sumarEstrella();sumarEstrella();
-      hablar(msg+" Ahora responde las preguntas.");
-      setTimeout(()=>L.querySelector(".preguntas").scrollIntoView({behavior:"smooth",block:"start"}),5000);return}
-    fraseLeo=k;fr[k].classList.add("leyendo");fr[k].scrollIntoView({block:"center",behavior:"smooth"});marcarPalabras(fr[k],[]);
-    $("#pasoLeo").textContent=`Frase ${k+1} de ${frases.length}`;escC.textContent="🎤 Te escucho. Lee la frase amarilla en voz alta.";
-    $("#estadoMic").textContent="Micrófono encendido: te escucho"}
-  const ANIMOS=["¡Muy bien!","¡Excelente!","¡Qué bien lees!","¡Perfecto!","¡Bravo!","¡Lo haces genial!","¡Sigue así!","¡Súper lectura!"];
-  const VAMOS=["Ahora la siguiente.","Sigue con la próxima.","Vamos con la otra.","Lee la que sigue."];
-  const elige=a=>a[Math.floor(Math.random()*a.length)];
-  function fraseLograda(k){const el=texto.querySelectorAll(".frase")[k];marcarPalabras(el,metaDe(k).map(()=>true));
-    fraseLeo=-1;racha++;sumarEstrella();tono(true);
-    const falta=frases.length-k-1;const a=elige(ANIMOS);
-    let dicho=a+(nombre&&(k%2===0)?" "+nombre+".":"");
-    if(falta===0)dicho="¡Última frase leída!";
-    else if(falta===1)dicho+=" ¡Solo te falta una!";
-    else if(k===Math.floor(frases.length/2)-1)dicho+=" ¡Ya vas por la mitad!";
-    animar((falta===0?"🌟 ":"⭐ ")+dicho);escC.textContent=`✅ Frase ${k+1} bien leída`;
-    $("#estadoMic").textContent="Escucha…";
-    lector.hablarSinOir(falta===0?dicho:dicho+" "+elige(VAMOS),.95,()=>irFrase(k+1))}
-  function fraseFallida(k,al){const el=texto.querySelectorAll(".frase")[k];fraseLeo=-1;racha=0;tono(false);
-    fallosFrase[k]=(fallosFrase[k]||0)+1;
-    const pal=palabrasDe(k);const malIdx=Math.min(al.p,pal.length-1);
-    marcarPalabras(el,[...al.ok.slice(0,malIdx).map(()=>true),false]);
-    const palabra=pal[malIdx].replace(/[.,¡!¿?;:«»"]/g,"");
-    animar("💪 ¡No pasa nada! Lee otra vez la frase","var(--naranja)");
-    escC.innerHTML=`La palabra <b>${palabra}</b> no se escuchó bien. Lee otra vez la frase desde el inicio.`;
-    $("#estadoMic").textContent="Escucha…";
-    const consuelo=elige([`Tranquilo${tuNombre()}, equivocarse es parte de aprender.`,`No te preocupes${tuNombre()}, los grandes lectores también se equivocan.`,`¡Ánimo${tuNombre()}! Cada intento te hace mejor lector.`]);
-    let guia=`Escucha cómo se dice: ${palabra}.`;
-    if(fallosFrase[k]>=2)guia=`Escucha bien esta frase: ${frases[k]}`;
-    lector.hablarSinOir(`${consuelo} ${guia} Ahora lee otra vez la frase desde la primera palabra. ¡Tú puedes!`,.8,()=>{
-      intentos++;marcarPalabras(el,[]);animar(`¡Otra vez! Tú puedes${tuNombre()}`);irFrase(k)})}
-  /* Pronunciación estricta: la palabra debe reconocerse igual. Solo se tolera 1 letra en palabras largas y más en nombres propios. */
-  const RELLENO=new Set(["eh","em","emm","mm","mmm","ah","aa","eeh","este"]);
-  function igual(m,h,propio){if(m===h)return true;if(propio)return lev(m,h)<=Math.ceil(m.length/3);return m.length>=8&&lev(m,h)<=1}
-  function alinear(meta,seg,propios){let p=0,extras=0,saltos=0,usados=0;const ok=[];
-    for(let i=0;i<seg.length&&p<meta.length;i++){const h=seg[i];
-      if(igual(meta[p],h,propios[p])){ok[p++]=true;usados=i+1;continue}
-      if(p+1<meta.length&&h===meta[p]+meta[p+1]){ok[p++]=true;ok[p++]=true;usados=i+1;continue}
-      if(propios[p]&&p+1<meta.length&&igual(meta[p+1],h,propios[p+1])){ok[p++]=true;ok[p++]=true;usados=i+1;continue} // nombre difícil
-      if(p+1<meta.length&&igual(meta[p+1],h,propios[p+1])){saltos++;break}   // se saltó una palabra
-      if(RELLENO.has(h)&&h!==meta[p]){usados=i+1;continue}
-      extras++;break}
-    return {p,ok,extras,saltos,usados}}
-  function crearLector(){
-    let r=null,activo=true,pausado=false,finTok=[],intTok=[],cursor=0,sordoHasta=0,cb=null;
-    const flujo=()=>finTok.concat(intTok);
-    function arrancar(){if(!activo||pausado)return;r=new SR();r.lang=idiomaRec;r.continuous=!MOVIL;r.interimResults=true;
-      r.onstart=()=>{micPermitido=true;pintarChipMic();$("#seguirMic").hidden=true};
-      r.onresult=e=>{let huboFinal=false;intTok=[];
-        for(let i=e.resultIndex;i<e.results.length;i++){const res=e.results[i];if(res.isFinal){finTok.push(...tokens(res[0].transcript));huboFinal=true}}
-        for(let i=0;i<e.results.length;i++){if(!e.results[i].isFinal)intTok.push(...tokens(e.results[i][0].transcript))}
-        const todo=flujo();
-        if(Date.now()<sordoHasta||speechSynthesis.speaking||fraseLeo<0){cursor=todo.length;return}
-        const seg=todo.slice(cursor);if(!seg.length)return;
-        const k=fraseLeo,meta=metaDe(k),al=alinear(meta,seg,propiosDe(k));
-        escC.innerHTML=`🎤 Escucho: <b>${seg.slice(-8).join(" ")}</b>`;
-        marcarPalabras(texto.querySelectorAll(".frase")[k],al.ok.slice(0,al.p));
-        if(al.p>=meta.length){cursor+=al.usados;fraseLograda(k);return}
-        const fallo=al.saltos>0||al.extras>0;
-        // En resultados parciales esperamos a que la palabra termine; en resultados finales el error ya es seguro.
-        const ultimaIncompleta=!huboFinal&&seg.length-al.usados<3;   // en parcial, esperamos 3 palabras para estar seguros
-        if(fallo&&(huboFinal||!ultimaIncompleta)){cursor=todo.length;fraseFallida(k,al)}};
-      r.onerror=ev=>{if(ev.error==="not-allowed"||ev.error==="service-not-allowed"||ev.error==="audio-capture"){
-          if(ES_IOS&&micPermitido&&ev.error==="not-allowed"){$("#seguirMic").hidden=false;escC.textContent="Toca «🎤 Seguir escuchando» para continuar.";return}
-          if(ev.error==="audio-capture")sinMicro=true;else{micBloqueado=true;micPermitido=false}pintarChipMic();activo=false;
-          $("#estadoMic").textContent="Micrófono bloqueado";pLeo.classList.add("apagado");escC.textContent=avisoMic();mostrarMic(false)}
-        else if(ev.error==="language-not-supported"){siguienteIdioma()}
-        else if(ev.error==="network"){escC.textContent="Se necesita internet para escuchar tu voz."}};
-      r.onend=()=>{if(activo&&!pausado)setTimeout(arrancar,MOVIL?250:150)};   // se reconecta solo, sin volver a pedir permiso
-      try{r.start()}catch(e){if(ES_IOS){$("#seguirMic").hidden=false;escC.textContent="Toca «🎤 Seguir escuchando» para continuar."}}}
-    arrancar();
-    return {apagar(){activo=false;try{r&&r.abort()}catch(e){}},
-            reanudar(){pausado=false;activo=true;arrancar()},
-            hablarSinOir(txt,vel=.85,alFin){sordoHasta=Date.now()+600;cursor=flujo().length;
-              // En celular y tablet se pausa el micrófono mientras habla la voz (evita que se escuche a sí mismo y el bloqueo del audio)
-              if(MOVIL){pausado=true;try{r&&r.abort()}catch(e){}}
-              hablar(txt,{vel,alTerminar:()=>{sordoHasta=Date.now()+500;cursor=flujo().length;
-                setTimeout(()=>{if(MOVIL&&activo){pausado=false;arrancar()}cursor=flujo().length;alFin&&alFin()},300)}})}}}
-  $("#leoYo").onclick=()=>{detener();if(lector)return;conMicro(iniciarLeoYo)};
-  $("#seguirMic").onclick=()=>{if(lector)lector.reanudar()};
-  const iniciarLeoYo=()=>{if(lector)return;intentos=1;fallosFrase={};racha=0;pLeo.hidden=false;pLeo.classList.remove("apagado");$("#saltarFrase").hidden=false;$("#pararLeo").hidden=false;
-    $("#estadoMic").textContent="Escucha…";animar(`¡Vamos${tuNombre()}! Tú puedes.`);
-    lector=crearLector();texto.querySelectorAll(".frase")[0].classList.add("leyendo");$("#pasoLeo").textContent=`Frase 1 de ${frases.length}`;
-    lector.hablarSinOir(`¡Vamos${tuNombre()}! Lee en voz alta, despacio y con voz clara, la frase amarilla. Si te equivocas, repites la frase. ¡Tú puedes!`,.9,()=>irFrase(0))};
-  $("#saltarFrase").onclick=()=>{if(fraseLeo>=0){const k=fraseLeo;fraseLeo=-1;animar("Pasamos a la siguiente");lector.hablarSinOir("Está bien, pasemos a la siguiente.",.95,()=>irFrase(k+1))}};
-  $("#pararLeo").onclick=terminarLeoYo;window._terminarLeo=terminarLeoYo;
-  $("#cerrarCuento").onclick=()=>{detener();terminarLeoYo();ir("cuentos")};
-  if($("#antC"))$("#antC").onclick=()=>{detener();terminarLeoYo();abrirCuento(i-1)};
-  if($("#sigC"))$("#sigC").onclick=()=>{detener();terminarLeoYo();abrirCuento(i+1)};
-  const ajustar=d=>{tamTexto=Math.max(1.1,Math.min(2.6,tamTexto+d));texto.style.setProperty("--tam",tamTexto+"rem");almacen.guardar("tam",tamTexto)};
-  $("#menos").onclick=()=>ajustar(-.15);$("#mas").onclick=()=>ajustar(.15);
-  const respondidas=new Set();
-  L.querySelectorAll(".preg").forEach(pr=>{const p=preg[+pr.dataset.p];let fallo=false;
-    pr.querySelector("p").onclick=()=>{detener();hablar(p.q+" "+p.ops.join(". "))};
-    pr.querySelectorAll(".ops button").forEach(b=>b.onclick=()=>{
-      if(respondidas.has(pr.dataset.p))return;
-      if(b.dataset.o===p.ok){b.classList.add("bien");celebrar();respondidas.add(pr.dataset.p);if(!fallo)sumarEstrella();
-        if(respondidas.size===preg.length){cuentosHechos.add(i);almacen.guardar("cuentosHechos",[...cuentosHechos]);setTimeout(()=>hablar(`¡Felicitaciones${tuNombre()}! Comprendiste todo el cuento.`),900)}}
-      else{fallo=true;b.classList.add("error");tono(false);hablar("Vuelve a leer el cuento y busca la pista.");setTimeout(()=>b.classList.remove("error"),400)}})})
+function updateBadges(){
+  const t = "⭐ " + totalStars();
+  ["menuStars","oStars","cStars","rStars"].forEach(i=>$(i).textContent=t);
 }
 
-if(almacen.leer("visto",false)){ir("inicio")}else{pedirNombre()}
+/* =====================================================
+   BIENVENIDA + MICRÓFONO
+===================================================== */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+$("nameInput").value = S.name || "";
+
+(function envCheck(){
+  let msgs = [];
+  if(!window.isSecureContext) msgs.push("⚠️ Para usar el micrófono, abre esta página con <b>https://</b> (por ejemplo GitHub Pages o Tiiny.host).");
+  if(!SR) msgs.push("⚠️ Este navegador no reconoce la voz. Usa <b>Google Chrome</b> (Android, Windows, Mac) o <b>Safari</b> (iPhone/iPad).");
+  if(msgs.length) $("envWarn").innerHTML = '<div class="warn">'+msgs.join("<br>")+'</div>';
+})();
+
+async function activarMic(){
+  const st = $("micState");
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    stream.getTracks().forEach(t=>t.stop());
+    st.className="micstate ok"; st.textContent="✅ ¡Micrófono activado! Ya puedes leer";
+    return true;
+  }catch(e){
+    st.className="micstate bad"; st.textContent="❌ No se pudo activar. Toca el candado 🔒 de la barra y permite el micrófono.";
+    return false;
+  }
+}
+$("btnMic").onclick = activarMic;
+if(navigator.permissions && navigator.permissions.query){
+  navigator.permissions.query({name:"microphone"}).then(p=>{
+    if(p.state==="granted"){ $("micState").className="micstate ok"; $("micState").textContent="✅ ¡Micrófono activado! Ya puedes leer"; }
+  }).catch(()=>{});
+}
+
+$("btnStart").onclick = ()=>{
+  S.name = $("nameInput").value.trim().replace(/\s+/g," ");
+  S.name = S.name ? S.name.charAt(0).toUpperCase()+S.name.slice(1) : "";
+  save();
+  // desbloquea la voz en móviles
+  try{ const u=new SpeechSynthesisUtterance(""); speechSynthesis.speak(u);}catch(e){}
+  renderMenu(); show("sMenu");
+  speak(S.name ? "¡Hola, "+S.name+"! Vamos a leer juntos." : "¡Hola! Vamos a leer juntos.");
+};
+
+/* =====================================================
+   MENÚ
+===================================================== */
+function renderMenu(){
+  $("helloTxt").innerHTML = S.name ? "¡Hola, <span>"+escapeH(S.name)+"</span>! 👋" : "¡Hola, lector! 👋";
+  const nO = Object.keys(S.o).length, nC = Object.keys(S.c).length;
+  $("barO").style.width = (nO/ORACIONES.length*100)+"%"; $("txtO").textContent = nO+" de "+ORACIONES.length+" leídas";
+  $("barC").style.width = (nC/CUENTOS.length*100)+"%"; $("txtC").textContent = nC+" de "+CUENTOS.length+" leídos";
+  updateBadges();
+}
+$("goOraciones").onclick = ()=>{ renderOraciones(); show("sOraciones"); };
+$("goCuentos").onclick = ()=>{ renderCuentos(); show("sCuentos"); };
+$("btnChangeName").onclick = ()=>{ $("nameInput").value=S.name; show("sWelcome"); };
+$("btnReset").onclick = ()=>{ if(confirm("¿Borrar todas las estrellas y empezar de nuevo?")){ S.o={}; S.c={}; save(); renderMenu(); } };
+
+/* =====================================================
+   LISTAS
+===================================================== */
+function renderOraciones(){
+  const tabs = $("levelTabs"); tabs.innerHTML="";
+  NIVELES.forEach((lv,i)=>{
+    const b=document.createElement("button"); b.className="tab"+(i===curLevel?" active":""); b.textContent=lv.n;
+    b.onclick=()=>{curLevel=i;renderOraciones();}; tabs.appendChild(b);
+  });
+  const g=$("oGrid"); g.innerHTML="";
+  const from=NIVELES[curLevel].from;
+  for(let i=from;i<from+25;i++){
+    const st=S.o[i];
+    const b=document.createElement("button"); b.className="item"+(st!==undefined?" done":"");
+    b.innerHTML='<div class="n">'+(i+1)+'</div><div class="st">'+(st!==undefined?starsTxt(st):"")+'</div>';
+    b.onclick=()=>openOracion(i); g.appendChild(b);
+  }
+}
+function renderCuentos(){
+  const g=$("cGrid"); g.innerHTML="";
+  CUENTOS.forEach((c,i)=>{
+    const st=S.c[i];
+    const b=document.createElement("button"); b.className="scard"+(st!==undefined?" done":"");
+    b.innerHTML='<div class="e">'+c.e+'</div><div class="num">Cuento '+(i+1)+'</div><div class="t">'+c.t+'</div><div class="st">'+(st!==undefined?starsTxt(st):"&nbsp;")+'</div>';
+    b.onclick=()=>openCuento(i); g.appendChild(b);
+  });
+}
+
+/* =====================================================
+   LECTOR
+===================================================== */
+let words = [];   // {el, norm, start}
+let curText = "";
+
+function openOracion(i){
+  mode="o"; idx=i; $("btnNext").onclick=nextHandler;
+  $("readerHead").textContent="✏️ Oración "+(i+1);
+  $("storyHeader").style.display="none"; $("storyFull").style.display="none";
+  $("progLine").textContent = NIVELES[Math.floor(i/25)].n + " · " + ((i%25)+1) + " de 25";
+  $("btnPrev").disabled = i===0;
+  $("btnNext").textContent = i===ORACIONES.length-1 ? "Terminar ✅" : "Siguiente ➡";
+  $("finalBox").classList.remove("show");
+  setText(ORACIONES[i]);
+  show("sReader");
+}
+function openCuento(i){
+  mode="c"; idx=i; part=0; partScores=[]; $("btnNext").onclick=nextHandler;
+  $("readerHead").textContent="📚 Cuento "+(i+1);
+  $("storyHeader").style.display="block"; $("storyFull").style.display="block";
+  $("storyTitle").textContent = CUENTOS[i].e+" "+CUENTOS[i].t;
+  $("finalBox").classList.remove("show");
+  loadPart();
+  show("sReader");
+}
+function loadPart(){
+  const c=CUENTOS[idx];
+  $("progLine").textContent = "Parte "+(part+1)+" de "+c.p.length;
+  $("btnPrev").disabled = part===0;
+  $("btnNext").textContent = part===c.p.length-1 ? "Terminar cuento ✅" : "Siguiente ➡";
+  $("storyDots").innerHTML = c.p.map((_,k)=>'<i class="'+(k===part?"cur":(partScores[k]!==undefined?"done":""))+'"></i>').join("");
+  $("storyFullTxt").innerHTML = c.p.map((s,k)=>{
+    const cls = k===part?"cur":(partScores[k]!==undefined?"ok":"pend");
+    return '<span class="l '+cls+'">'+(partScores[k]!==undefined&&k!==part?"✓ ":"")+escapeH(s)+'</span> ';
+  }).join("");
+  setText(c.p[part]);
+}
+function setText(text){
+  stopAll();
+  curText=text; words=[];
+  const box=$("readerBox"); box.innerHTML=""; box.classList.remove("listening");
+  const re=/\S+/g; let m;
+  while((m=re.exec(text))){
+    const sp=document.createElement("span"); sp.className="w"; sp.textContent=m[0];
+    const n=norm(m[0]);
+    const w={el:sp, norm:n, start:m.index, raw:m[0]};
+    sp.onclick=()=>{ if(!listening) speakWord(w); };
+    box.appendChild(sp); words.push(w);
+  }
+  $("feedback").classList.remove("show");
+  $("btnRetry").style.display="none";
+  $("micLabel").textContent = "Toca el micrófono 🎤 y lee en voz alta";
+  markNext([]);
+  updateBadges();
+}
+
+$("readerBack").onclick=()=>{
+  if(mode==="o"){ renderOraciones(); show("sOraciones"); } else { renderCuentos(); show("sCuentos"); }
+};
+$("btnPrev").onclick=()=>{
+  if(mode==="o"){ if(idx>0) openOracion(idx-1); }
+  else if(part>0){ part--; $("finalBox").classList.remove("show"); loadPart(); }
+};
+$("btnNext").onclick=()=>{
+  if(mode==="o"){
+    if(idx<ORACIONES.length-1){ curLevel=Math.floor((idx+1)/25); openOracion(idx+1); }
+    else { renderMenu(); show("sMenu"); }
+  } else {
+    const c=CUENTOS[idx];
+    if(part<c.p.length-1){ part++; loadPart(); }
+    else finishStory();
+  }
+};
+$("btnRetry").onclick=()=>{ setText(curText); startListening(); };
+$("btnListen").onclick=()=>{ if(!listening) speakSentence(); };
+$("btnRead").onclick=()=>{ listening ? stopListening() : startListening(); };
+
+function finishStory(){
+  const c=CUENTOS[idx];
+  const vals=c.p.map((_,k)=>partScores[k]||0);
+  const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+  const st=Math.round(avg);
+  if(S.c[idx]===undefined || st>S.c[idx]) S.c[idx]=st;
+  save(); updateBadges();
+  $("finStars").textContent=starsTxt(st);
+  let msg;
+  if(st===3) msg="¡Leíste todo el cuento muy bien"+(S.name?", "+S.name:"")+"! 🎉";
+  else if(st===2) msg="¡Muy bien"+(S.name?", "+S.name:"")+"! Terminaste el cuento.";
+  else msg="¡Terminaste el cuento! Practica otra vez para ganar más estrellas.";
+  $("finMsg").textContent=msg;
+  $("finalBox").classList.add("show");
+  $("finalBox").scrollIntoView({behavior:"smooth",block:"center"});
+  speak(msg.replace(/[🎉]/g,""));
+  if(st>=2) confetti();
+  $("btnNext").textContent="📚 Elegir otro cuento";
+  $("btnNext").onclick=()=>{ $("btnNext").onclick=nextHandler; renderCuentos(); show("sCuentos"); };
+}
+const nextHandler = $("btnNext").onclick;
+
+/* =====================================================
+   VOZ (LECTURA EN VOZ ALTA)
+===================================================== */
+let esVoice=null;
+function pickVoice(){
+  const vs=speechSynthesis.getVoices();
+  const pref=["es-PE","es-US","es-MX","es-419","es-ES"];
+  for(const p of pref){ const v=vs.find(x=>x.lang&&x.lang.replace("_","-").toLowerCase()===p.toLowerCase()); if(v){esVoice=v;return;} }
+  esVoice=vs.find(x=>x.lang&&x.lang.toLowerCase().startsWith("es"))||null;
+}
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+
+function speak(text, opts={}){
+  if(!("speechSynthesis" in window)) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang="es-ES"; if(esVoice){u.voice=esVoice;u.lang=esVoice.lang;}
+  u.rate=opts.rate||0.85; u.pitch=1.1;
+  if(opts.onboundary) u.onboundary=opts.onboundary;
+  if(opts.onend) u.onend=opts.onend;
+  speechSynthesis.speak(u);
+}
+function speakSentence(){
+  clearSpeak();
+  speak(curText,{rate:0.75,
+    onboundary:e=>{
+      if(e.name && e.name!=="word") return;
+      clearSpeak();
+      let w=null; for(const x of words){ if(x.start<=e.charIndex) w=x; }
+      if(w) w.el.classList.add("speak");
+    },
+    onend:clearSpeak});
+}
+function speakWord(w){
+  clearSpeak(); w.el.classList.add("speak");
+  speak(w.raw.replace(/[¡!¿?.,;:]/g,""),{rate:0.7,onend:clearSpeak});
+}
+function clearSpeak(){ words.forEach(w=>w.el.classList.remove("speak")); }
+
+/* =====================================================
+   RECONOCIMIENTO DE VOZ
+===================================================== */
+const NUMS={"0":"cero","1":"uno","2":"dos","3":"tres","4":"cuatro","5":"cinco","6":"seis","7":"siete","8":"ocho","9":"nueve","10":"diez","100":"cien"};
+function norm(s){
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9\s]/g," ").trim();
+}
+function spokenWords(t){
+  return norm(t).split(/\s+/).filter(Boolean).map(w=>NUMS[w]||w);
+}
+function lev(a,b){
+  const m=a.length,n=b.length; if(!m) return n; if(!n) return m;
+  let prev=Array.from({length:n+1},(_,j)=>j);
+  for(let i=1;i<=m;i++){
+    const cur=[i];
+    for(let j=1;j<=n;j++) cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));
+    prev=cur;
+  }
+  return prev[n];
+}
+function sim(a,b){
+  if(a===b) return true;
+  // b/v, y/ll, s/z/c suenan igual en Perú
+  const f=x=>x.replace(/v/g,"b").replace(/ll/g,"y").replace(/z/g,"s").replace(/c([ei])/g,"s$1").replace(/h/g,"");
+  if(f(a)===f(b)) return true;
+  if(a.length>=4 && lev(a,b)<=1) return true;
+  if(a.length>=8 && lev(a,b)<=2) return true;
+  return false;
+}
+function align(target, spoken){
+  const n=target.length, m=spoken.length;
+  const dp=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--)
+    dp[i][j]= sim(target[i],spoken[j]) ? 1+dp[i+1][j+1] : Math.max(dp[i+1][j],dp[i][j+1]);
+  const res=new Array(n).fill(false); let i=0,j=0;
+  while(i<n&&j<m){
+    if(sim(target[i],spoken[j]) && dp[i][j]===1+dp[i+1][j+1]){res[i]=true;i++;j++;}
+    else if(dp[i+1][j]>=dp[i][j+1]) i++; else j++;
+  }
+  return res;
+}
+function targetList(){ return words.filter(w=>w.norm).map(w=>({w, t:w.norm.split(" ")[0]})); }
+
+let rec=null, listening=false, finalized=true, transcript="", gotSpeech=false, silenceT=null, maxT=null, recLang="es-PE";
+
+function startListening(){
+  if(!SR){ showReaderWarn("Este navegador no puede escuchar. Usa Google Chrome o Safari."); return; }
+  if(!window.isSecureContext){ showReaderWarn("El micrófono necesita que la página se abra con https://"); return; }
+  if(listening) return;
+  if("speechSynthesis" in window) speechSynthesis.cancel();
+  clearSpeak();
+  words.forEach(w=>w.el.classList.remove("ok","bad"));
+  $("feedback").classList.remove("show"); $("btnRetry").style.display="none";
+  markNext([]);
+
+  transcript=""; gotSpeech=false; finalized=false;
+  const r=new SR(); rec=r;
+  rec.lang=recLang; rec.interimResults=true; rec.continuous=true; rec.maxAlternatives=1;
+
+  rec.onresult=e=>{
+    if(r!==rec || finalized) return;
+    let t="";
+    for(let i=0;i<e.results.length;i++) t+=" "+e.results[i][0].transcript;
+    transcript=t; gotSpeech=true;
+    const matched=liveMark();
+    if(matched.every(Boolean)){ finish(); return; }
+    resetSilence(2300);
+  };
+  rec.onerror=e=>{
+    if(r!==rec) return;
+    if(e.error==="language-not-supported" && recLang!=="es-ES"){
+      recLang="es-ES"; finalized=true; listening=false; setTimeout(startListening,100); return;
+    }
+    if(e.error==="not-allowed"||e.error==="service-not-allowed"){
+      showReaderWarn("🔒 El micrófono está bloqueado. Toca el candado de la barra de direcciones y permite el micrófono.");
+    }
+  };
+  rec.onend=()=>{ if(r!==rec) return; listening=false; setMicUI(false); if(!finalized) finish(); };
+
+  try{ rec.start(); }catch(err){ return; }
+  listening=true; setMicUI(true);
+  resetSilence(9000); // tiempo para empezar a hablar
+  clearTimeout(maxT); maxT=setTimeout(()=>finish(), 8000 + words.length*1300);
+}
+function resetSilence(ms){ clearTimeout(silenceT); silenceT=setTimeout(()=>finish(), ms); }
+function stopListening(){ finish(); }
+function stopAll(){
+  if(rec){ finalized=true; try{rec.abort();}catch(e){} }
+  listening=false; setMicUI(false);
+  clearTimeout(silenceT); clearTimeout(maxT);
+  if("speechSynthesis" in window) speechSynthesis.cancel();
+}
+function setMicUI(on){
+  $("btnRead").classList.toggle("on",on);
+  $("btnRead").textContent = on ? "⏹️" : "🎤";
+  $("readerBox").classList.toggle("listening",on);
+  $("btnListen").disabled = on;
+  if(on) $("micLabel").textContent="👂 Te estoy escuchando... ¡lee en voz alta!";
+}
+function liveMark(){
+  const tl=targetList();
+  const matched=align(tl.map(x=>x.t), spokenWords(transcript));
+  tl.forEach((x,k)=>x.w.el.classList.toggle("ok",matched[k]));
+  markNext(matched);
+  return matched;
+}
+function markNext(matched){
+  const tl=targetList();
+  tl.forEach(x=>x.w.el.classList.remove("next"));
+  let last=-1; matched.forEach((v,k)=>{ if(v) last=k; });
+  const nx=tl[last+1]; if(nx && !finalized) nx.w.el.classList.add("next");
+}
+
+function finish(){
+  if(finalized && !listening) return;
+  finalized=true;
+  clearTimeout(silenceT); clearTimeout(maxT);
+  try{ rec.stop(); }catch(e){}
+  listening=false; setMicUI(false);
+  evaluate();
+}
+
+function evaluate(){
+  const tl=targetList();
+  tl.forEach(x=>x.w.el.classList.remove("next"));
+  if(!gotSpeech || !transcript.trim()){
+    $("micLabel").textContent="🙉 No te escuché. Toca el micrófono y lee más fuerte.";
+    $("btnRetry").style.display="none";
+    return;
+  }
+  const matched=align(tl.map(x=>x.t), spokenWords(transcript));
+  tl.forEach((x,k)=>{ x.w.el.classList.toggle("ok",matched[k]); x.w.el.classList.toggle("bad",!matched[k]); });
+  const pct=matched.filter(Boolean).length/tl.length;
+  const st = pct>=0.9?3 : pct>=0.7?2 : pct>=0.4?1 : 0;
+  const nm = S.name ? ", "+S.name : "";
+
+  let msg, say;
+  if(st===3){ msg="¡Excelente"+nm+"! Leíste muy bien 🎉"; say="¡Excelente"+nm+"! Leíste muy bien."; }
+  else if(st===2){ msg="¡Muy bien"+nm+"! Casi perfecto 👏"; say="¡Muy bien"+nm+"! Casi perfecto. Revisa las palabras en rojo."; }
+  else if(st===1){ msg="¡Buen intento"+nm+"! Practica las palabras en rojo 💪"; say="Buen intento"+nm+". Escucha y vuelve a intentarlo."; }
+  else { msg="¡Tú puedes"+nm+"! Escucha primero y vuelve a leer 🔊"; say="Tú puedes"+nm+". Escucha primero y vuelve a leer."; }
+
+  $("fbStars").textContent=starsTxt(st);
+  $("fbMsg").textContent=msg;
+  $("fbHeard").textContent="Escuché: “"+transcript.trim()+"”";
+  $("feedback").classList.add("show");
+  $("btnRetry").style.display="inline-flex";
+  $("micLabel").textContent = st>=2 ? "¡Sigue así! Toca Siguiente ➡" : "Toca una palabra roja para escucharla";
+
+  if(mode==="o"){
+    if(S.o[idx]===undefined || st>S.o[idx]) S.o[idx]=st;
+  } else {
+    if(partScores[part]===undefined || st>partScores[part]) partScores[part]=st;
+    $("storyDots").querySelectorAll("i")[part].classList.add("done");
+  }
+  save(); updateBadges();
+  if(st===3) confetti();
+  setTimeout(()=>speak(say),250);
+}
+
+function showReaderWarn(t){
+  $("readerWarn").innerHTML='<div class="warn">'+t+'</div>';
+  setTimeout(()=>{$("readerWarn").innerHTML="";},7000);
+}
+
+/* =====================================================
+   UTILIDADES
+===================================================== */
+function escapeH(s){ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function confetti(){
+  const em=["⭐","🎉","🌟","🎈","✨","💛"];
+  for(let i=0;i<22;i++){
+    const d=document.createElement("div"); d.className="confetti";
+    d.textContent=em[Math.floor(Math.random()*em.length)];
+    d.style.left=Math.random()*100+"vw";
+    d.style.animationDuration=(1.8+Math.random()*1.6)+"s";
+    d.style.animationDelay=(Math.random()*.4)+"s";
+    document.body.appendChild(d); setTimeout(()=>d.remove(),4200);
+  }
+}
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) stopAll(); });
 </script>
+</body>
+</html>
