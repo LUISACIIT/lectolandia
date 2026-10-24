@@ -436,14 +436,18 @@ function avisoMic(){if(!SR)return "Este navegador no puede escuchar tu voz. Abre
 function escuchar({alOir,alTerminar,alError}){
   if(!SR||micBloqueado){alError&&alError(avisoMic());return null}
   callar();
-  const r=new SR();r.lang="es-PE";r.interimResults=true;r.continuous=true;r.maxAlternatives=3;recActual=r;
+  const r=new SR();r.lang="es-PE";r.interimResults=false;r.continuous=true;r.maxAlternatives=3;recActual=r;
   let finales=[],alts=[],silencio=null,termino=false;
   const cerrar=()=>{clearTimeout(silencio);try{r.stop()}catch(e){}};
   const programar=t=>{clearTimeout(silencio);silencio=setTimeout(cerrar,t)};
-  r.onresult=e=>{let parcial="";alts=[];
-    for(let i=0;i<e.results.length;i++){const res=e.results[i];parcial+=res[0].transcript+" ";
-      if(res.isFinal)for(let a=0;a<res.length;a++)alts.push(res[a].transcript)}
-    finales=[parcial.trim(),...alts];alOir&&alOir(parcial.trim());programar(1800)};
+  // Reconstruir desde los resultados definitivos; nunca acumular hipótesis parciales.
+  r.onresult=e=>{const segmentos=[];alts=[];
+    for(let i=0;i<e.results.length;i++){const res=e.results[i];
+      if(!res.isFinal)continue;
+      segmentos.push(res[0].transcript.trim());
+      for(let a=1;a<res.length;a++)alts.push(res[a].transcript)}
+    const reconocido=segmentos.join(" ").trim();
+    finales=[reconocido,...alts];alOir&&alOir(reconocido);programar(1800)};
   r.onerror=ev=>{if(r._cancel)return;if(ev.error==="not-allowed"||ev.error==="service-not-allowed"||ev.error==="audio-capture"){micBloqueado=true;termino=true;alError&&alError(avisoMic())}
     else if(ev.error==="no-speech"){termino=true;alError&&alError("No te escuché. Toca el micrófono y lee en voz alta.")}};
   r.onend=()=>{clearTimeout(silencio);if(recActual===r)recActual=null;if(r._cancel)return;if(!termino){termino=true;alTerminar&&alTerminar(finales.filter(Boolean))}};
@@ -621,10 +625,12 @@ function abrirCuento(i){
   function crearLector(){
     let r=null,activo=true,finTok=[],intTok=[],cursor=0,sordoHasta=0,cb=null;
     const flujo=()=>finTok.concat(intTok);
-    function arrancar(){if(!activo)return;r=new SR();r.lang="es-PE";r.continuous=true;r.interimResults=true;
+    function arrancar(){if(!activo)return;r=new SR();r.lang="es-PE";r.continuous=true;r.interimResults=false;
+      // Cada reconexión tiene su propia lista; mantener solo el historial previo.
+      const anteriores=finTok.slice();
       r.onresult=e=>{let huboFinal=false;intTok=[];
-        for(let i=e.resultIndex;i<e.results.length;i++){const res=e.results[i];if(res.isFinal){finTok.push(...tokens(res[0].transcript));huboFinal=true}}
-        for(let i=0;i<e.results.length;i++){if(!e.results[i].isFinal)intTok.push(...tokens(e.results[i][0].transcript))}
+        finTok=anteriores.slice();
+        for(let i=0;i<e.results.length;i++){const res=e.results[i];if(res.isFinal){finTok.push(...tokens(res[0].transcript));huboFinal=true}}
         const todo=flujo();
         if(Date.now()<sordoHasta||speechSynthesis.speaking||fraseLeo<0){cursor=todo.length;return}
         const seg=todo.slice(cursor);if(!seg.length)return;
@@ -669,3 +675,4 @@ function abrirCuento(i){
 
 if(almacen.leer("visto",false)){ir("inicio")}else{pedirNombre()}
 </script>
+
