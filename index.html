@@ -96,7 +96,8 @@ h1,h2,h3,.btn,.tab,.badge{font-family:'Baloo 2',sans-serif}
 .reader{background:#fff;border-radius:28px;padding:clamp(18px,4vw,34px) clamp(12px,3vw,26px);box-shadow:0 12px 34px rgba(43,45,66,.1);
   text-align:center;font-size:clamp(1.9rem,6.5vw,3.1rem);line-height:1.7;min-height:170px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 4px;border:4px solid #fff0d4}
 .reader.listening{border-color:var(--bad)}
-.reader.story{display:block !important;font-size:clamp(1.3rem,4.4vw,2rem);line-height:1.9;text-align:justify;hyphens:none;white-space:normal}
+.reader{max-width:100%;overflow:hidden;overflow-wrap:break-word;word-wrap:break-word}
+.reader.story{display:block !important;font-size:clamp(1.3rem,4.4vw,2rem);line-height:1.9;text-align:left;hyphens:none;white-space:normal}
 .reader.story .w{display:inline;padding:2px 3px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
 .reader.story br{display:none}
 .w{display:inline-block;padding:0 8px;border-radius:12px;cursor:pointer;transition:background .2s,color .2s,transform .2s}
@@ -158,7 +159,7 @@ h1,h2,h3,.btn,.tab,.badge{font-family:'Baloo 2',sans-serif}
       </div>
     </div>
     <div id="envWarn"></div>
-    <p style="color:#a3a7ba;font-size:.85rem;margin-top:18px">Versi&#xF3;n 2.3</p>
+    <p style="color:#a3a7ba;font-size:.85rem;margin-top:18px">Versi&#xF3;n 2.4</p>
   </div>
 </section>
 
@@ -496,7 +497,7 @@ function setText(text){
     const n=norm(m[0]);
     const w={el:sp, norm:n, start:m.index, raw:m[0]};
     sp.onclick=()=>{ if(!listening) speakWord(w); };
-    box.appendChild(sp); words.push(w);
+    box.appendChild(sp); box.appendChild(document.createTextNode(" ")); words.push(w);
   }
   $("feedback").classList.remove("show");
   $("btnRetry").style.display="none";
