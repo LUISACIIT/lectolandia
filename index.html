@@ -645,9 +645,9 @@ function startListening(){
 
   rec.onresult=e=>{
     if(r!==rec || finalized) return;
-    let t="";
-    for(let i=0;i<e.results.length;i++) t+=" "+e.results[i][0].transcript;
-    transcript=t; gotSpeech=true;
+    const segs=[];
+    for(let i=0;i<e.results.length;i++) segs.push(e.results[i][0].transcript);
+    transcript=mergeSegments(segs); gotSpeech=true;
     const matched=liveMark();
     if(matched.every(Boolean)){ finish(); return; }
     resetSilence(2300);
@@ -667,6 +667,24 @@ function startListening(){
   listening=true; setMicUI(true);
   resetSilence(9000); // tiempo para empezar a hablar
   clearTimeout(maxT); maxT=setTimeout(()=>finish(), 8000 + words.length*1300);
+}
+/* En Chrome de Android cada resultado repite lo ya dicho ("mi", "mi perro", "mi perro ladra").
+   Se unen los fragmentos sin duplicar: si uno contiene al anterior, lo reemplaza; si se solapan, solo se añade lo nuevo. */
+function mergeSegments(segs){
+  let out=[];
+  const key=w=>norm(w);
+  for(const seg of segs){
+    const sw=String(seg||"").trim().split(/\s+/).filter(Boolean);
+    if(!sw.length) continue;
+    const a=out.map(key), b=sw.map(key);
+    if(!out.length){ out=sw; continue; }
+    if(b.length>=a.length && a.every((w,i)=>w===b[i])){ out=sw; continue; }      // el nuevo amplía al anterior
+    if(b.join(" ")&&(" "+a.join(" ")+" ").includes(" "+b.join(" ")+" ")) continue; // ya estaba incluido
+    let k=Math.min(a.length,b.length);
+    while(k>0 && a.slice(a.length-k).join(" ")!==b.slice(0,k).join(" ")) k--;      // solapamiento final/inicio
+    out=out.concat(sw.slice(k));
+  }
+  return out.filter((w,i)=>i===0||key(w)!==key(out[i-1])).join(" ");          // quita repeticiones seguidas
 }
 function resetSilence(ms){ clearTimeout(silenceT); silenceT=setTimeout(()=>finish(), ms); }
 function stopListening(){ finish(); }
