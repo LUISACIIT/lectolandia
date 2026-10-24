@@ -1,4 +1,7 @@
 <title>Lectolandia</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Permissions-Policy" content="microphone=(self)">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Andika:wght@400;700&display=swap">
@@ -153,6 +156,17 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .animo.salta{animation:saltito .5s}
 @keyframes saltito{40%{transform:scale(1.15)}}
 .barra-lectura{display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chip.mic-ok{background:#c9f3dd}.chip.mic-no{background:#ffd9cc}
+.aviso .acciones{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.aviso .acciones button{background:var(--papel);border-radius:12px;padding:8px 12px;font-family:var(--f-titulo);font-weight:700;box-shadow:0 3px 0 var(--sombra)}
+.velo{position:fixed;inset:0;background:rgba(35,48,74,.45);display:grid;place-items:center;z-index:80;padding:16px}
+.velo[hidden]{display:none}
+.dlg{background:var(--papel);border-radius:24px;padding:22px;max-width:440px;width:100%;text-align:center;box-shadow:0 16px 40px rgba(0,0,0,.25)}
+.dlg .em{font-size:3.4rem;line-height:1}
+.dlg h3{font-family:var(--f-titulo);font-size:1.6rem;margin:6px 0}
+.dlg p{font-size:1.08rem;margin:0 0 12px;text-align:left}
+.btn-mic-grande{background:var(--rojo);color:#fff;font-family:var(--f-titulo);font-weight:800;font-size:1.15rem;padding:12px 22px;border-radius:18px;box-shadow:0 6px 0 #d93e3e;margin:10px 4px 0}
+.btn-mic-grande:active{transform:translateY(4px)}
 footer{text-align:center;color:var(--tinta-suave);font-size:.9rem;margin-top:28px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -205,7 +219,9 @@ footer{text-align:center;color:var(--tinta-suave);font-size:.9rem;margin-top:28p
     <div class="panel" id="lector" hidden></div>
   </section>
 
-  <footer>Lectolandia · 100 oraciones y 50 cuentos · Funciona mejor en Chrome o Edge con el sonido activado</footer>
+  <footer>Lectolandia · 100 oraciones y 50 cuentos · Micrófono: Chrome o Edge (laptop y Android) · Safari (iPhone y iPad)</footer>
+</div>
+<div hidden>
 </div>
 
 <script>
@@ -410,10 +426,10 @@ let nombre=almacen.leer("nombre","");
 const tuNombre=(pre=", ")=>nombre?pre+nombre:"";
 function pintarNombre(){$("#nombreChip").textContent=nombre||"Lector"}
 function pedirNombre(){$("#campoNombre").value=nombre;ir("nombre");setTimeout(()=>$("#campoNombre").focus(),100)}
-$("#formNombre").addEventListener("submit",e=>{e.preventDefault();nombre=$("#campoNombre").value.trim().replace(/\s+/g," ");
+$("#formNombre").addEventListener("submit",e=>{e.preventDefault();pedirAlInicio();nombre=$("#campoNombre").value.trim().replace(/\s+/g," ");
   nombre=nombre?nombre.charAt(0).toUpperCase()+nombre.slice(1):"";almacen.guardar("nombre",nombre);almacen.guardar("visto",true);pintarNombre();ir("inicio");
   hablar(nombre?`¡Hola, ${nombre}! Vamos a leer juntos.`:"¡Hola! Vamos a leer juntos.")});
-$("#saltarNombre").onclick=()=>{almacen.guardar("visto",true);ir("inicio");hablar("¡Hola! Vamos a leer juntos.")};
+$("#saltarNombre").onclick=()=>{pedirAlInicio();almacen.guardar("visto",true);ir("inicio");hablar("¡Hola! Vamos a leer juntos.")};
 $("#chipNombre").onclick=pedirNombre;
 pintarNombre();
 
@@ -430,25 +446,76 @@ function comparar(objetivo,oidos){const meta=tokens(objetivo),oi=tokens(oidos.jo
   const ok=meta.map(w=>{for(let k=p;k<Math.min(oi.length,p+4);k++){if(parecida(w,oi[k])){p=k+1;return true}}
     if(oi.some(x=>parecida(w,x)))return true;return false});
   return {ok,pct:meta.length?ok.filter(Boolean).length/meta.length:0}}
-function avisoMic(){if(!SR)return "Este navegador no puede escuchar tu voz. Abre Lectolandia en Google Chrome o Microsoft Edge.";
-  if(micBloqueado)return "El micrófono está bloqueado aquí. Publica el archivo en tu propia página (GitHub Pages o Tiiny.host), ábrela en Chrome y toca «Permitir» cuando pida el micrófono.";return ""}
+/* ===== MICRÓFONO EN LAPTOP, CELULAR Y TABLET ===== */
+const UA=navigator.userAgent;
+const ES_IOS=/iPad|iPhone|iPod/.test(UA)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const ES_ANDROID=/Android/i.test(UA);
+const MOVIL=ES_IOS||ES_ANDROID||/Mobi|Tablet|Silk|Kindle/i.test(UA);
+const EN_IFRAME=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+const IDIOMAS_REC=ES_IOS?["es-MX","es-ES","es-US"]:["es-PE","es-419","es-MX","es-ES"];
+let idiomaRec=almacen.leer("idiomaRec",IDIOMAS_REC[0]);if(!IDIOMAS_REC.includes(idiomaRec))idiomaRec=IDIOMAS_REC[0];
+function siguienteIdioma(){const i=IDIOMAS_REC.indexOf(idiomaRec);if(i<IDIOMAS_REC.length-1){idiomaRec=IDIOMAS_REC[i+1];almacen.guardar("idiomaRec",idiomaRec);return true}return false}
+let micPermitido=false,sinMicro=false;
+function politicaPermite(){try{const p=document.permissionsPolicy||document.featurePolicy;if(p&&p.allowsFeature)return p.allowsFeature("microphone")}catch(e){}return true}
+function instrucDispositivo(){
+  if(ES_IOS)return "En iPhone o iPad: abre Ajustes › Safari › Micrófono › «Permitir». También en Ajustes › Privacidad y seguridad › Reconocimiento de voz, activa Safari. Luego recarga la página.";
+  if(ES_ANDROID)return "En Android: toca el candado 🔒 (o los ajustes ⚙️) junto a la dirección › Permisos › Micrófono › «Permitir». Si no aparece, ve a Ajustes del teléfono › Aplicaciones › Chrome › Permisos › Micrófono. Luego recarga.";
+  return "En la laptop: haz clic en el candado 🔒 junto a la dirección › Micrófono › «Permitir» y recarga. En Windows revisa también Configuración › Privacidad › Micrófono (activado para el navegador).";}
+function avisoMic(){
+  if(!SR)return ES_IOS?"En iPhone o iPad abre Lectolandia en Safari (actualizado) para poder leer con el micrófono."
+                      :"Este navegador no puede escuchar tu voz. Abre Lectolandia en Google Chrome o Microsoft Edge.";
+  if(EN_IFRAME&&!politicaPermite())return "Lectolandia está dentro de otra página que no deja usar el micrófono. Toca «Abrir en ventana nueva».";
+  if(!window.isSecureContext&&location.protocol!=="file:")return "El micrófono solo funciona en páginas seguras (que empiezan con https://). Publica Lectolandia en GitHub Pages, Netlify o Tiiny.host.";
+  if(sinMicro)return "No encontramos un micrófono. Conecta uno (o unos audífonos con micrófono) y toca «Probar otra vez».";
+  if(micBloqueado)return "El micrófono está bloqueado. "+instrucDispositivo();
+  return ""}
+const puedeAbrirAparte=()=>EN_IFRAME&&/^(https?|file):$/.test(location.protocol);
+function botonesMic(){return `<div class="acciones"><button type="button" data-mic="probar">🎤 Probar otra vez</button>${puedeAbrirAparte()?`<button type="button" data-mic="abrir">↗️ Abrir en ventana nueva</button>`:""}</div>`}
+function htmlAvisoMic(){return ""}
+function pintarChipMic(){const c=$("#chipMic");if(!c)return;c.classList.toggle("mic-ok",micPermitido&&!avisoMic());c.classList.toggle("mic-no",!!avisoMic());
+  c.textContent=micPermitido&&!avisoMic()?"🎤✅":avisoMic()?"🎤⛔":"🎤";
+  const e=$("#estadoMicBienvenida");if(e)e.textContent=micPermitido&&!avisoMic()?"✅ Micrófono activado. ¡Ya puedes leer en voz alta!":avisoMic()||"Para leer en voz alta, toca el botón y elige «Permitir»."}
+/* Pide permiso (debe llamarse al tocar un botón). En iPhone/iPad el permiso lo pide el propio reconocimiento de voz. */
+/* Pide el permiso con el propio reconocimiento de voz (no con getUserMedia),
+   para que Chrome muestre solo las 3 opciones, sin la barra de nivel ni la lista de micrófonos. */
+function pedirMicrofono(){return new Promise(res=>{
+  if(!SR){res(false);return}
+  if(ES_IOS){micBloqueado=false;pintarChipMic();res(true);return}
+  let r,listo=false;const fin=ok=>{if(listo)return;listo=true;try{r.abort()}catch(e){}pintarChipMic();res(ok)};
+  try{r=new SR();r.lang=idiomaRec;r.continuous=false;r.interimResults=false}catch(e){res(false);return}
+  r.onaudiostart=r.onstart=()=>{micPermitido=true;micBloqueado=false;sinMicro=false;fin(true)};
+  r.onerror=ev=>{if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){micBloqueado=true;micPermitido=false;fin(false)}
+    else if(ev.error==="audio-capture"){sinMicro=true;fin(false)}else if(ev.error!=="aborted")fin(micPermitido)};
+  r.onend=()=>fin(micPermitido);
+  try{r.start()}catch(e){fin(false)}})}
+function mostrarMic(ok){if(ok)return;const m=avisoMic()||"No se pudo activar el micrófono.";document.querySelectorAll("#escucheOr,#escucheC").forEach(e=>e.textContent="🎤 "+m)}
+/* Ejecuta fn con el micrófono listo; si hace falta, primero pide permiso */
+function conMicro(fn){const m=avisoMic();
+  if(m&&!micBloqueado&&!sinMicro){mostrarMic(false);return}
+  if(micPermitido||ES_IOS){fn();return}
+  pedirMicrofono().then(ok=>{if(ok)fn();else mostrarMic(false)})}
+/* Al primer toque del niño se muestra directamente el permiso del navegador */
+function pedirAlInicio(){if(SR&&!ES_IOS&&!micPermitido&&!micBloqueado&&!avisoMic())pedirMicrofono()}
+if(navigator.permissions&&navigator.permissions.query){
+  navigator.permissions.query({name:"microphone"}).then(st=>{const f=()=>{micPermitido=st.state==="granted";if(st.state==="denied")micBloqueado=true;if(st.state==="granted")micBloqueado=false;pintarChipMic()};f();st.onchange=f}).catch(()=>{})}
+pintarChipMic();
 /* Escucha al niño. Llama alTerminar(textos) con las alternativas reconocidas. */
 function escuchar({alOir,alTerminar,alError}){
   if(!SR||micBloqueado){alError&&alError(avisoMic());return null}
   callar();
-  const r=new SR();r.lang="es-PE";r.interimResults=false;r.continuous=true;r.maxAlternatives=3;recActual=r;
+  const r=new SR();r.lang=idiomaRec;r.interimResults=true;r.continuous=!MOVIL;r.maxAlternatives=3;recActual=r;r.onstart=()=>{micPermitido=true;pintarChipMic()};
   let finales=[],alts=[],silencio=null,termino=false;
   const cerrar=()=>{clearTimeout(silencio);try{r.stop()}catch(e){}};
   const programar=t=>{clearTimeout(silencio);silencio=setTimeout(cerrar,t)};
-  // Reconstruir desde los resultados definitivos; nunca acumular hipótesis parciales.
-  r.onresult=e=>{const segmentos=[];alts=[];
-    for(let i=0;i<e.results.length;i++){const res=e.results[i];
-      if(!res.isFinal)continue;
-      segmentos.push(res[0].transcript.trim());
-      for(let a=1;a<res.length;a++)alts.push(res[a].transcript)}
-    const reconocido=segmentos.join(" ").trim();
-    finales=[reconocido,...alts];alOir&&alOir(reconocido);programar(1800)};
-  r.onerror=ev=>{if(r._cancel)return;if(ev.error==="not-allowed"||ev.error==="service-not-allowed"||ev.error==="audio-capture"){micBloqueado=true;termino=true;alError&&alError(avisoMic())}
+  r.onresult=e=>{let parcial="";alts=[];
+    for(let i=0;i<e.results.length;i++){const res=e.results[i];parcial+=res[0].transcript+" ";
+      if(res.isFinal)for(let a=0;a<res.length;a++)alts.push(res[a].transcript)}
+    finales=[parcial.trim(),...alts];alOir&&alOir(parcial.trim());programar(1800)};
+  r.onerror=ev=>{if(r._cancel)return;
+    if(ev.error==="not-allowed"||ev.error==="service-not-allowed"){micBloqueado=true;micPermitido=false;pintarChipMic();termino=true;alError&&alError(avisoMic())}
+    else if(ev.error==="audio-capture"){sinMicro=true;pintarChipMic();termino=true;alError&&alError(avisoMic())}
+    else if(ev.error==="language-not-supported"){siguienteIdioma();termino=true;alError&&alError("Ajusté el idioma. Toca el micrófono otra vez.")}
+    else if(ev.error==="network"){termino=true;alError&&alError("Se necesita internet para escuchar tu voz.")}
     else if(ev.error==="no-speech"){termino=true;alError&&alError("No te escuché. Toca el micrófono y lee en voz alta.")}};
   r.onend=()=>{clearTimeout(silencio);if(recActual===r)recActual=null;if(r._cancel)return;if(!termino){termino=true;alTerminar&&alTerminar(finales.filter(Boolean))}};
   try{r.start();programar(8000)}catch(e){alError&&alError(avisoMic())}
@@ -478,7 +545,7 @@ function pintarInicio(){$(".saludo").textContent=nombre?`¡Hola, ${nombre}! ¿Qu
   $("#mundos").innerHTML=m.map(w=>`<button class="mundo" data-ir="${w.id}" style="--c:${COLORES[w.c][0]};--c2:${COLORES[w.c][1]}">
     <span class="edad">${w.edad}</span><div><div class="em">${w.em}</div><h3>${w.t}</h3><p>${w.d}</p></div>
     <div><div class="progreso"><i style="width:${Math.round(w.hecho/w.total*100)}%"></i></div><div class="cifra">${w.hecho} de ${w.total} ${w.u}</div></div></button>`).join("");
-  document.querySelectorAll("[data-ir]").forEach(b=>b.onclick=()=>{ir(b.dataset.ir);hablar(b.dataset.ir==="oraciones"?"Tren de oraciones":"Bosque de cuentos")})}
+  document.querySelectorAll("[data-ir]").forEach(b=>b.onclick=()=>{pedirAlInicio();ir(b.dataset.ir);hablar(b.dataset.ir==="oraciones"?"Tren de oraciones":"Bosque de cuentos")})}
 
 /* ===== ORACIONES ===== */
 const palabrasTocables=txt=>txt.split(" ").map(w=>`<button data-w="${w.replace(/[.,¡!¿?;:]/g,"")}">${w}</button>`).join(" ");
@@ -508,15 +575,15 @@ function jugarOraciones(lista,nombre){
       <div class="oracion">${palabrasTocables(frase)}</div>
       <div class="barra-lectura"><button class="mic" id="micOr">🎤 Leo en voz alta</button><button class="repetir">🔊 Escuchar</button></div>
       <p class="escuche" id="escucheOr">${avisoMic()?"":"Toca el micrófono y lee la oración en voz alta."}</p>
-      ${avisoMic()?`<p class="aviso">🎤 ${avisoMic()}</p>`:""}
+      ${htmlAvisoMic()}
       <div class="opciones">${ops.map(o=>`<button class="op" data-o="${o}">${o}</button>`).join("")}</div>
       <p class="ayuda" style="margin-top:18px">Primero léela en voz alta. Si no sabes una palabra, tócala. Luego elige el dibujo correcto.</p>`;
     const orEl=panel.querySelector(".oracion");let leidaBien=false,oyente=null;
     orEl.onclick=e=>{const b=e.target.closest("button");if(b)hablar(b.dataset.w,{vel:.75})};
     panel.querySelector(".repetir").onclick=()=>hablar(frase,{vel:.8});
     const micB=panel.querySelector("#micOr"),esc=panel.querySelector("#escucheOr");
-    micB.onclick=()=>{
-      if(oyente){oyente.parar();return}
+    micB.onclick=()=>{if(oyente){oyente.parar();return}conMicro(empezarOr)};
+    const empezarOr=()=>{if(oyente)return;
       micB.classList.add("oyendo");micB.textContent="👂 Te escucho… (toca al terminar)";esc.textContent="Lee despacio y con voz clara.";
       oyente=escuchar({
         alOir:t=>{esc.innerHTML=`Escuché: <b>${t}</b>`},
@@ -550,11 +617,11 @@ function abrirCuento(i){
   L.innerHTML=`<div class="lector-top"><button class="mini" id="cerrarCuento">← Cuentos</button><h3 class="titulo">${c.t}</h3>
     <button class="mini" id="menos" aria-label="Letra más pequeña">A−</button><button class="mini" id="mas" aria-label="Letra más grande">A+</button>
     <button class="mini prim" id="leerCuento">🔊 Escuchar cuento</button><button class="mini" id="leoYo" style="background:var(--rojo);color:#fff;box-shadow:0 4px 0 #d93e3e">🎤 Leo yo</button></div>
-    ${avisoMic()?`<p class="aviso">🎤 ${avisoMic()}</p>`:""}
+    ${htmlAvisoMic()}
     <div class="ilustra">${c.em}</div>
     <p class="ayuda" style="text-align:center">Cuento ${i+1} de ${CUENTOS.length} · ${NIVELES_C[c.n]} · Toca una palabra para oírla</p>
     <div class="texto" style="--tam:${tamTexto}rem">${frases.map((f,k)=>`<span class="frase" data-f="${k}">${palabrasTocables(f)}</span>`).join(" ")}</div>
-    <div id="panelLeoYo" class="juego leo-panel" hidden><div class="mic-vivo"><span class="punto"></span><span id="estadoMic">Micrófono encendido: lee en voz alta</span></div><p class="etiqueta" id="pasoLeo"></p><p class="animo" id="animoC"></p><p class="escuche" id="escucheC"></p><div class="barra-lectura"><button class="mini" id="saltarFrase">Saltar frase →</button><button class="mini" id="pararLeo">⏹ Terminar lectura</button></div></div>
+    <div id="panelLeoYo" class="juego leo-panel" hidden><div class="mic-vivo"><span class="punto"></span><span id="estadoMic">Micrófono encendido: lee en voz alta</span></div><p class="etiqueta" id="pasoLeo"></p><p class="animo" id="animoC"></p><p class="escuche" id="escucheC"></p><div class="barra-lectura"><button class="mini" id="seguirMic" hidden style="background:var(--rojo);color:#fff">🎤 Seguir escuchando</button><button class="mini" id="saltarFrase">Saltar frase →</button><button class="mini" id="pararLeo">⏹ Terminar lectura</button></div></div>
     <div class="preguntas">${preg.map((p,k)=>`<div class="preg" data-p="${k}"><p>🔊 ${k+1}. ${p.q}</p><div class="ops">${p.ops.map(o=>`<button data-o="${o.replace(/"/g,"&quot;")}">${o}</button>`).join("")}</div></div>`).join("")}</div>
     <div class="pie-cuento">${i>0?`<button class="mini" id="antC">← Anterior</button>`:"<span></span>"}${i<CUENTOS.length-1?`<button class="mini prim" id="sigC">Siguiente cuento →</button>`:""}</div>`;
   const texto=L.querySelector(".texto");let leyendo=false;
@@ -623,14 +690,13 @@ function abrirCuento(i){
       extras++;break}
     return {p,ok,extras,saltos,usados}}
   function crearLector(){
-    let r=null,activo=true,finTok=[],intTok=[],cursor=0,sordoHasta=0,cb=null;
+    let r=null,activo=true,pausado=false,finTok=[],intTok=[],cursor=0,sordoHasta=0,cb=null;
     const flujo=()=>finTok.concat(intTok);
-    function arrancar(){if(!activo)return;r=new SR();r.lang="es-PE";r.continuous=true;r.interimResults=false;
-      // Cada reconexión tiene su propia lista; mantener solo el historial previo.
-      const anteriores=finTok.slice();
+    function arrancar(){if(!activo||pausado)return;r=new SR();r.lang=idiomaRec;r.continuous=!MOVIL;r.interimResults=true;
+      r.onstart=()=>{micPermitido=true;pintarChipMic();$("#seguirMic").hidden=true};
       r.onresult=e=>{let huboFinal=false;intTok=[];
-        finTok=anteriores.slice();
-        for(let i=0;i<e.results.length;i++){const res=e.results[i];if(res.isFinal){finTok.push(...tokens(res[0].transcript));huboFinal=true}}
+        for(let i=e.resultIndex;i<e.results.length;i++){const res=e.results[i];if(res.isFinal){finTok.push(...tokens(res[0].transcript));huboFinal=true}}
+        for(let i=0;i<e.results.length;i++){if(!e.results[i].isFinal)intTok.push(...tokens(e.results[i][0].transcript))}
         const todo=flujo();
         if(Date.now()<sordoHasta||speechSynthesis.speaking||fraseLeo<0){cursor=todo.length;return}
         const seg=todo.slice(cursor);if(!seg.length)return;
@@ -642,17 +708,25 @@ function abrirCuento(i){
         // En resultados parciales esperamos a que la palabra termine; en resultados finales el error ya es seguro.
         const ultimaIncompleta=!huboFinal&&seg.length-al.usados<3;   // en parcial, esperamos 3 palabras para estar seguros
         if(fallo&&(huboFinal||!ultimaIncompleta)){cursor=todo.length;fraseFallida(k,al)}};
-      r.onerror=ev=>{if(ev.error==="not-allowed"||ev.error==="service-not-allowed"||ev.error==="audio-capture"){micBloqueado=true;activo=false;
-          $("#estadoMic").textContent="Micrófono bloqueado";pLeo.classList.add("apagado");escC.textContent=avisoMic()}
+      r.onerror=ev=>{if(ev.error==="not-allowed"||ev.error==="service-not-allowed"||ev.error==="audio-capture"){
+          if(ES_IOS&&micPermitido&&ev.error==="not-allowed"){$("#seguirMic").hidden=false;escC.textContent="Toca «🎤 Seguir escuchando» para continuar.";return}
+          if(ev.error==="audio-capture")sinMicro=true;else{micBloqueado=true;micPermitido=false}pintarChipMic();activo=false;
+          $("#estadoMic").textContent="Micrófono bloqueado";pLeo.classList.add("apagado");escC.textContent=avisoMic();mostrarMic(false)}
+        else if(ev.error==="language-not-supported"){siguienteIdioma()}
         else if(ev.error==="network"){escC.textContent="Se necesita internet para escuchar tu voz."}};
-      r.onend=()=>{if(activo)setTimeout(arrancar,150)};   // se reconecta solo, sin volver a pedir permiso
-      try{r.start()}catch(e){}}
+      r.onend=()=>{if(activo&&!pausado)setTimeout(arrancar,MOVIL?250:150)};   // se reconecta solo, sin volver a pedir permiso
+      try{r.start()}catch(e){if(ES_IOS){$("#seguirMic").hidden=false;escC.textContent="Toca «🎤 Seguir escuchando» para continuar."}}}
     arrancar();
     return {apagar(){activo=false;try{r&&r.abort()}catch(e){}},
+            reanudar(){pausado=false;activo=true;arrancar()},
             hablarSinOir(txt,vel=.85,alFin){sordoHasta=Date.now()+600;cursor=flujo().length;
-              hablar(txt,{vel,alTerminar:()=>{sordoHasta=Date.now()+500;cursor=flujo().length;alFin&&setTimeout(()=>{cursor=flujo().length;alFin()},300)}})}}}
-  $("#leoYo").onclick=()=>{detener();if(avisoMic()){hablar("Para leer en voz alta necesito el micrófono.");return}
-    if(lector)return;intentos=1;fallosFrase={};racha=0;pLeo.hidden=false;pLeo.classList.remove("apagado");$("#saltarFrase").hidden=false;$("#pararLeo").hidden=false;
+              // En celular y tablet se pausa el micrófono mientras habla la voz (evita que se escuche a sí mismo y el bloqueo del audio)
+              if(MOVIL){pausado=true;try{r&&r.abort()}catch(e){}}
+              hablar(txt,{vel,alTerminar:()=>{sordoHasta=Date.now()+500;cursor=flujo().length;
+                setTimeout(()=>{if(MOVIL&&activo){pausado=false;arrancar()}cursor=flujo().length;alFin&&alFin()},300)}})}}}
+  $("#leoYo").onclick=()=>{detener();if(lector)return;conMicro(iniciarLeoYo)};
+  $("#seguirMic").onclick=()=>{if(lector)lector.reanudar()};
+  const iniciarLeoYo=()=>{if(lector)return;intentos=1;fallosFrase={};racha=0;pLeo.hidden=false;pLeo.classList.remove("apagado");$("#saltarFrase").hidden=false;$("#pararLeo").hidden=false;
     $("#estadoMic").textContent="Escucha…";animar(`¡Vamos${tuNombre()}! Tú puedes.`);
     lector=crearLector();texto.querySelectorAll(".frase")[0].classList.add("leyendo");$("#pasoLeo").textContent=`Frase 1 de ${frases.length}`;
     lector.hablarSinOir(`¡Vamos${tuNombre()}! Lee en voz alta, despacio y con voz clara, la frase amarilla. Si te equivocas, repites la frase. ¡Tú puedes!`,.9,()=>irFrase(0))};
@@ -675,4 +749,3 @@ function abrirCuento(i){
 
 if(almacen.leer("visto",false)){ir("inicio")}else{pedirNombre()}
 </script>
-
