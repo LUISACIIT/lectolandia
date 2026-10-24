@@ -90,6 +90,8 @@ h1,h2,h3,.btn,.tab,.badge{font-family:'Baloo 2',sans-serif}
 .reader{background:#fff;border-radius:28px;padding:clamp(18px,4vw,34px) clamp(12px,3vw,26px);box-shadow:0 12px 34px rgba(43,45,66,.1);
   text-align:center;font-size:clamp(1.9rem,6.5vw,3.1rem);line-height:1.7;min-height:170px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 4px;border:4px solid #fff0d4}
 .reader.listening{border-color:var(--bad)}
+.reader.story{font-size:clamp(1.35rem,4.6vw,2.1rem);line-height:1.85;justify-content:flex-start;text-align:left;gap:2px 2px}
+.reader.story .w{padding:0 5px}
 .w{display:inline-block;padding:0 8px;border-radius:12px;cursor:pointer;transition:background .2s,color .2s,transform .2s}
 .w.next{box-shadow:inset 0 -5px 0 var(--yel)}
 .w.ok{background:#c9f5dd;color:#11703f}
@@ -205,7 +207,7 @@ h1,h2,h3,.btn,.tab,.badge{font-family:'Baloo 2',sans-serif}
   </div>
   <div class="progress-line" id="progLine"></div>
   <div class="reader" id="readerBox"></div>
-  <p class="hint">👆 Toca una palabra para escucharla</p>
+  <p class="hint" id="hintTxt">👆 Toca una palabra para escucharla</p>
 
   <div class="controls">
     <button class="btn blue" id="btnListen">🔊 Escuchar</button>
@@ -463,30 +465,22 @@ function openOracion(i){
   show("sReader");
 }
 function openCuento(i){
-  mode="c"; idx=i; part=0; partScores=[]; $("btnNext").onclick=nextHandler;
+  mode="c"; idx=i; $("btnNext").onclick=nextHandler;
   $("readerHead").textContent="📚 Cuento "+(i+1);
-  $("storyHeader").style.display="block"; $("storyFull").style.display="block";
+  $("storyHeader").style.display="block"; $("storyFull").style.display="none";
+  $("storyDots").style.display="none";
   $("storyTitle").textContent = CUENTOS[i].e+" "+CUENTOS[i].t;
   $("finalBox").classList.remove("show");
-  loadPart();
+  $("progLine").textContent = "Lee todo el cuento en voz alta 📖";
+  $("btnPrev").disabled = i===0;
+  $("btnNext").textContent = i===CUENTOS.length-1 ? "Terminar ✅" : "Siguiente cuento ➡";
+  setText(CUENTOS[i].p.join(" "));
   show("sReader");
-}
-function loadPart(){
-  const c=CUENTOS[idx];
-  $("progLine").textContent = "Parte "+(part+1)+" de "+c.p.length;
-  $("btnPrev").disabled = part===0;
-  $("btnNext").textContent = part===c.p.length-1 ? "Terminar cuento ✅" : "Siguiente ➡";
-  $("storyDots").innerHTML = c.p.map((_,k)=>'<i class="'+(k===part?"cur":(partScores[k]!==undefined?"done":""))+'"></i>').join("");
-  $("storyFullTxt").innerHTML = c.p.map((s,k)=>{
-    const cls = k===part?"cur":(partScores[k]!==undefined?"ok":"pend");
-    return '<span class="l '+cls+'">'+(partScores[k]!==undefined&&k!==part?"✓ ":"")+escapeH(s)+'</span> ';
-  }).join("");
-  setText(c.p[part]);
 }
 function setText(text){
   stopAll();
   curText=text; words=[];
-  const box=$("readerBox"); box.innerHTML=""; box.classList.remove("listening");
+  const box=$("readerBox"); box.innerHTML=""; box.classList.remove("listening"); box.classList.toggle("story",mode==="c");
   const re=/\S+/g; let m;
   while((m=re.exec(text))){
     const sp=document.createElement("span"); sp.className="w"; sp.textContent=m[0];
@@ -507,42 +501,21 @@ $("readerBack").onclick=()=>{
 };
 $("btnPrev").onclick=()=>{
   if(mode==="o"){ if(idx>0) openOracion(idx-1); }
-  else if(part>0){ part--; $("finalBox").classList.remove("show"); loadPart(); }
+  else if(idx>0){ openCuento(idx-1); }
 };
 $("btnNext").onclick=()=>{
   if(mode==="o"){
     if(idx<ORACIONES.length-1){ curLevel=Math.floor((idx+1)/25); openOracion(idx+1); }
     else { renderMenu(); show("sMenu"); }
   } else {
-    const c=CUENTOS[idx];
-    if(part<c.p.length-1){ part++; loadPart(); }
-    else finishStory();
+    if(idx<CUENTOS.length-1) openCuento(idx+1);
+    else { renderCuentos(); show("sCuentos"); }
   }
 };
 $("btnRetry").onclick=()=>{ setText(curText); startListening(); };
 $("btnListen").onclick=()=>{ if(!listening) speakSentence(); };
 $("btnRead").onclick=()=>{ listening ? stopListening() : startListening(); };
 
-function finishStory(){
-  const c=CUENTOS[idx];
-  const vals=c.p.map((_,k)=>partScores[k]||0);
-  const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
-  const st=Math.round(avg);
-  if(S.c[idx]===undefined || st>S.c[idx]) S.c[idx]=st;
-  save(); updateBadges();
-  $("finStars").textContent=starsTxt(st);
-  let msg;
-  if(st===3) msg="¡Leíste todo el cuento muy bien"+(S.name?", "+S.name:"")+"! 🎉";
-  else if(st===2) msg="¡Muy bien"+(S.name?", "+S.name:"")+"! Terminaste el cuento.";
-  else msg="¡Terminaste el cuento! Practica otra vez para ganar más estrellas.";
-  $("finMsg").textContent=msg;
-  $("finalBox").classList.add("show");
-  $("finalBox").scrollIntoView({behavior:"smooth",block:"center"});
-  speak(msg.replace(/[🎉]/g,""));
-  if(st>=2) confetti();
-  $("btnNext").textContent="📚 Elegir otro cuento";
-  $("btnNext").onclick=()=>{ $("btnNext").onclick=nextHandler; renderCuentos(); show("sCuentos"); };
-}
 const nextHandler = $("btnNext").onclick;
 
 /* =====================================================
@@ -627,7 +600,7 @@ function align(target, spoken){
 }
 function targetList(){ return words.filter(w=>w.norm).map(w=>({w, t:w.norm.split(" ")[0]})); }
 
-let rec=null, listening=false, finalized=true, transcript="", gotSpeech=false, silenceT=null, maxT=null, recLang="es-PE";
+let accum="", rec=null, listening=false, finalized=true, transcript="", gotSpeech=false, silenceT=null, maxT=null, recLang="es-PE";
 
 function startListening(){
   if(!SR){ showReaderWarn("Este navegador no puede escuchar. Usa Google Chrome o Safari."); return; }
@@ -639,52 +612,42 @@ function startListening(){
   $("feedback").classList.remove("show"); $("btnRetry").style.display="none";
   markNext([]);
 
-  transcript=""; gotSpeech=false; finalized=false;
+  transcript=""; accum=""; gotSpeech=false; finalized=false;
+  if(!beginRec()) return;
+  listening=true; setMicUI(true);
+  resetSilence(9000); // tiempo para empezar a hablar
+  clearTimeout(maxT); maxT=setTimeout(()=>finish(), 8000 + words.length*1300);
+}
+// Crea una sesión de reconocimiento. En textos largos (cuentos) el navegador
+// a veces se detiene solo; entonces se reinicia y se suma lo ya leído.
+function beginRec(){
   const r=new SR(); rec=r;
   rec.lang=recLang; rec.interimResults=true; rec.continuous=true; rec.maxAlternatives=1;
 
   rec.onresult=e=>{
     if(r!==rec || finalized) return;
-    const segs=[];
-    for(let i=0;i<e.results.length;i++) segs.push(e.results[i][0].transcript);
-    transcript=mergeSegments(segs); gotSpeech=true;
+    let t="";
+    for(let i=0;i<e.results.length;i++) t+=" "+e.results[i][0].transcript;
+    transcript=accum+" "+t; gotSpeech=true;
     const matched=liveMark();
     if(matched.every(Boolean)){ finish(); return; }
-    resetSilence(2300);
+    resetSilence(mode==="c" ? 3800 : 2300);
   };
   rec.onerror=e=>{
     if(r!==rec) return;
     if(e.error==="language-not-supported" && recLang!=="es-ES"){
-      recLang="es-ES"; finalized=true; listening=false; setTimeout(startListening,100); return;
+      recLang="es-ES"; setTimeout(()=>{ if(!finalized) beginRec(); },100); return;
     }
     if(e.error==="not-allowed"||e.error==="service-not-allowed"){
       showReaderWarn("🔒 El micrófono está bloqueado. Toca el candado de la barra de direcciones y permite el micrófono.");
     }
   };
-  rec.onend=()=>{ if(r!==rec) return; listening=false; setMicUI(false); if(!finalized) finish(); };
-
-  try{ rec.start(); }catch(err){ return; }
-  listening=true; setMicUI(true);
-  resetSilence(9000); // tiempo para empezar a hablar
-  clearTimeout(maxT); maxT=setTimeout(()=>finish(), 8000 + words.length*1300);
-}
-/* En Chrome de Android cada resultado repite lo ya dicho ("mi", "mi perro", "mi perro ladra").
-   Se unen los fragmentos sin duplicar: si uno contiene al anterior, lo reemplaza; si se solapan, solo se añade lo nuevo. */
-function mergeSegments(segs){
-  let out=[];
-  const key=w=>norm(w);
-  for(const seg of segs){
-    const sw=String(seg||"").trim().split(/\s+/).filter(Boolean);
-    if(!sw.length) continue;
-    const a=out.map(key), b=sw.map(key);
-    if(!out.length){ out=sw; continue; }
-    if(b.length>=a.length && a.every((w,i)=>w===b[i])){ out=sw; continue; }      // el nuevo amplía al anterior
-    if(b.join(" ")&&(" "+a.join(" ")+" ").includes(" "+b.join(" ")+" ")) continue; // ya estaba incluido
-    let k=Math.min(a.length,b.length);
-    while(k>0 && a.slice(a.length-k).join(" ")!==b.slice(0,k).join(" ")) k--;      // solapamiento final/inicio
-    out=out.concat(sw.slice(k));
-  }
-  return out.filter((w,i)=>i===0||key(w)!==key(out[i-1])).join(" ");          // quita repeticiones seguidas
+  rec.onend=()=>{
+    if(r!==rec || finalized) return;
+    accum=transcript;               // guarda lo leído y sigue escuchando
+    setTimeout(()=>{ if(!finalized && r===rec && !beginRec()) finish(); },150);
+  };
+  try{ rec.start(); return true; }catch(err){ return false; }
 }
 function resetSilence(ms){ clearTimeout(silenceT); silenceT=setTimeout(()=>finish(), ms); }
 function stopListening(){ finish(); }
@@ -749,13 +712,12 @@ function evaluate(){
   $("fbHeard").textContent="Escuché: “"+transcript.trim()+"”";
   $("feedback").classList.add("show");
   $("btnRetry").style.display="inline-flex";
-  $("micLabel").textContent = st>=2 ? "¡Sigue así! Toca Siguiente ➡" : "Toca una palabra roja para escucharla";
+  $("micLabel").textContent = st>=2 ? (mode==="c" ? "¡Cuento terminado! Toca Siguiente cuento ➡" : "¡Sigue así! Toca Siguiente ➡") : "Toca una palabra roja para escucharla";
 
   if(mode==="o"){
     if(S.o[idx]===undefined || st>S.o[idx]) S.o[idx]=st;
   } else {
-    if(partScores[part]===undefined || st>partScores[part]) partScores[part]=st;
-    $("storyDots").querySelectorAll("i")[part].classList.add("done");
+    if(S.c[idx]===undefined || st>S.c[idx]) S.c[idx]=st;
   }
   save(); updateBadges();
   if(st===3) confetti();
